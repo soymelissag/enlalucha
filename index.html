@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>En la lucha — SVG frame animation</title>
+  <title>En la lucha — SVG animation</title>
 
   <style>
     /* ============================================================
-       CALM / ELEGANT FRAME-BY-FRAME SVG ANIMATION (flipbook)
+       CALM / GHIBLI-STYLE SVG ANIMATION
        ------------------------------------------------------------
-       Each SVG is one "frame". They play in order and loop.
-       You edit two easy places:
-         1) The FRAMES list in the <script> at the bottom
-            -> list your SVG files in the order they should play.
-         2) The colors / speeds in this <style> block.
+       Each SVG is one "scene". The camera slowly drifts across each
+       scene (like a hand-painted film), scenes softly dissolve into
+       one another, and clouds drift across the sky.
+
+       You mostly edit:
+         1) The FRAMES list in the <script> (your files, in order)
+         2) The pacing knobs right below the frame list
+         3) The background colors in :root
        ============================================================ */
 
     :root {
-      /* Background behind the frames (top -> bottom gradient).
-         A soft warm neutral so your colorful art pops like a gallery. */
+      /* Soft warm neutral ground so your colorful art pops. */
       --sky-top:    #f4efe7;
       --sky-bottom: #e6dccd;
     }
@@ -32,15 +34,16 @@
       font-family: system-ui, sans-serif;
     }
 
-    /* The stage holds all frames stacked in the same spot. */
+    /* The stage holds every scene, stacked in the same spot. */
     .stage {
       position: relative;
       width: 100vw;
       height: 100vh;
+      overflow: hidden;   /* keeps the slow camera drift tidy */
     }
 
-    /* Every frame fills the stage and starts hidden. The script
-       fades exactly one frame in at a time. */
+    /* Each scene fills the stage and starts invisible.
+       Scenes cross-dissolve — soft, like a Ghibli scene change. */
     .frame {
       position: absolute;
       inset: 0;
@@ -48,9 +51,7 @@
       align-items: center;
       justify-content: center;
       opacity: 0;
-      /* The crossfade. Bigger = softer, dreamier transitions.
-         Set to 0s for a hard "flipbook" cut instead. */
-      transition: opacity 1.2s ease-in-out;
+      transition: opacity 1.8s ease-in-out;   /* the soft dissolve */
       will-change: opacity;
     }
     .frame.is-visible { opacity: 1; }
@@ -59,27 +60,62 @@
       width: 100%;
       height: 100%;
       object-fit: contain;   /* show the whole illustration, no cropping */
+      transform-origin: center;
       user-select: none;
       -webkit-user-drag: none;
+      will-change: transform;
     }
 
-    /* Accessibility: if the viewer prefers no motion, just show
-       the first frame without cycling. */
+    /* The "camera": a slow zoom + drift across the scene while it's
+       on screen. Each scene sets its own drift direction (--kb-x/y). */
+    .frame.is-visible img {
+      animation: kenburns 8s ease-out both;
+    }
+    @keyframes kenburns {
+      from { transform: scale(1.0)  translate(0, 0); }
+      to   { transform: scale(1.07) translate(var(--kb-x, -2%), var(--kb-y, -1%)); }
+    }
+
+    /* Drifting clouds — a soft, slow layer over the sky band only.
+       Kept faint so it reads as atmosphere, not stickers. */
+    .sky {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 38%);
+              mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 38%);
+    }
+    .cloud {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%);
+      filter: blur(10px);
+      opacity: 0.38;
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      from { transform: translateX(-40vw); }
+      to   { transform: translateX(140vw); }
+    }
+
+    /* Accessibility: if the viewer prefers no motion, hold still. */
     @media (prefers-reduced-motion: reduce) {
       .frame { transition: none; }
+      .frame.is-visible img { animation: none; }
+      .cloud { animation: none; opacity: 0; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Frames get built by the script into this stage. -->
+  <!-- The script builds the scenes + clouds into this stage. -->
   <div class="stage" id="stage"></div>
 
   <script>
     /* ============================================================
        1) YOUR FRAMES — in play order.
-          Put your files in the svg/ folder and list them here.
-          Add or remove lines to match how many frames you have.
        ============================================================ */
     const FRAMES = [
       'svg/frame-1.svg',
@@ -88,43 +124,81 @@
     ];
 
     /* ============================================================
-       2) TIMING — how long each frame stays on screen (ms).
-          1000 = 1 second.  Lower = faster animation.
+       2) PACING — how slow and dreamy it feels.
+          FRAME_DURATION = how long each scene holds (ms).
+          Bigger = slower, calmer, more cinematic.
        ============================================================ */
-    const FRAME_DURATION = 2000;
+    const FRAME_DURATION = 5200;
 
     /* ------------------------------------------------------------
        Engine below — you don't need to edit this.
        ------------------------------------------------------------ */
     const stage = document.getElementById('stage');
 
-    // Build one <div class="frame"> per SVG.
-    const frameEls = FRAMES.map((src) => {
+    // Different gentle camera drift per scene, for variety.
+    const DRIFTS = [
+      ['-2.4%', '-1.4%'],
+      [' 2.0%', '-1.2%'],
+      ['-1.8%', ' 1.6%'],
+    ];
+
+    // Build one scene per SVG.
+    const frameEls = FRAMES.map((src, i) => {
       const div = document.createElement('div');
       div.className = 'frame';
       const img = document.createElement('img');
       img.src = src;
       img.alt = '';
+      const d = DRIFTS[i % DRIFTS.length];
+      img.style.setProperty('--kb-x', d[0]);
+      img.style.setProperty('--kb-y', d[1]);
       div.appendChild(img);
       stage.appendChild(div);
       return div;
     });
 
+    // Drifting cloud layer (top / left / size / seconds-per-pass).
+    const sky = document.createElement('div');
+    sky.className = 'sky';
+    [
+      ['10%', '5%',  '42vmin', 62],
+      ['40%', '2%',  '54vmin', 84],
+      ['64%', '20%', '34vmin', 72],
+    ].forEach(([top, left, size, secs], k) => {
+      const c = document.createElement('div');
+      c.className = 'cloud';
+      c.style.top = top;
+      c.style.left = left;
+      c.style.width = size;
+      c.style.height = `calc(${size} * 0.5)`;
+      c.style.animationDuration = secs + 's';
+      c.style.animationDelay = (-k * 20) + 's';   // spread them out
+      sky.appendChild(c);
+    });
+    stage.appendChild(sky);
+
+    // Reveal a scene and (re)start its slow camera drift.
+    function show(i) {
+      const el = frameEls[i];
+      el.classList.add('is-visible');
+      const img = el.querySelector('img');
+      img.style.animation = 'none';       // rewind the camera...
+      void img.offsetWidth;               // ...force the browser to notice...
+      img.style.animation = '';           // ...then play it again.
+    }
+
     let current = 0;
-    frameEls[0]?.classList.add('is-visible');   // show the first frame
+    show(0);
 
     const prefersReduced =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Advance to the next frame, looping back to the start.
-    function nextFrame() {
-      frameEls[current].classList.remove('is-visible');
-      current = (current + 1) % frameEls.length;
-      frameEls[current].classList.add('is-visible');
-    }
-
     if (frameEls.length > 1 && !prefersReduced) {
-      setInterval(nextFrame, FRAME_DURATION);
+      setInterval(() => {
+        frameEls[current].classList.remove('is-visible');
+        current = (current + 1) % frameEls.length;
+        show(current);
+      }, FRAME_DURATION);
     }
   </script>
 </body>
