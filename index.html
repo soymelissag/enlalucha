@@ -3,180 +3,128 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>En la lucha — SVG animation</title>
+  <title>En la lucha — SVG frame animation</title>
 
   <style>
     /* ============================================================
-       CALM / ELEGANT SVG ANIMATION
+       CALM / ELEGANT FRAME-BY-FRAME SVG ANIMATION (flipbook)
        ------------------------------------------------------------
-       You mostly edit two places:
-         1) The <div class="layer"> tags in the HTML below
-            -> point each one at your own SVG file.
+       Each SVG is one "frame". They play in order and loop.
+       You edit two easy places:
+         1) The FRAMES list in the <script> at the bottom
+            -> list your SVG files in the order they should play.
          2) The colors / speeds in this <style> block.
-       Everything else just works.
        ============================================================ */
 
     :root {
-      /* Background gradient colors (top -> bottom). Change these to
-         re-theme the whole scene in one place. */
+      /* Background behind the frames (top -> bottom gradient). */
       --sky-top:    #2a3550;
       --sky-bottom: #6d7f9e;
-
-      /* How far layers drift when you move the mouse (parallax).
-         Bigger = more movement. */
-      --parallax:   18px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body { height: 100%; }
 
     body {
       background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
-      overflow: hidden;                 /* keep the scene fixed, no scrollbars */
+      overflow: hidden;
       font-family: system-ui, sans-serif;
     }
 
-    /* The stage holds every SVG layer, stacked on top of each other. */
+    /* The stage holds all frames stacked in the same spot. */
     .stage {
       position: relative;
       width: 100vw;
       height: 100vh;
-      perspective: 1000px;              /* gives the parallax a little depth */
     }
 
-    /* Each layer is one SVG illustration. */
-    .layer {
+    /* Every frame fills the stage and starts hidden. The script
+       fades exactly one frame in at a time. */
+    .frame {
       position: absolute;
-      inset: 0;                         /* fill the stage */
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      will-change: transform, opacity;
-
-      /* Start invisible + slightly low, then fade + rise in (see @keyframes).
-         This is the elegant "arrival". */
       opacity: 0;
-      animation:
-        fadeRise 2.4s ease-out forwards,     /* the entrance (runs once)   */
-        float   var(--float, 9s) ease-in-out infinite;   /* gentle breathing */
+      /* The crossfade. Bigger = softer, dreamier transitions.
+         Set to 0s for a hard "flipbook" cut instead. */
+      transition: opacity 1.2s ease-in-out;
+      will-change: opacity;
     }
+    .frame.is-visible { opacity: 1; }
 
-    /* Each layer's SVG scales to fit nicely without distortion. */
-    .layer img {
+    .frame img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;   /* show the whole illustration, no cropping */
       user-select: none;
       -webkit-user-drag: none;
     }
 
-    /* Stagger the entrances so layers arrive one after another. */
-    .layer:nth-child(1) { animation-delay: 0.0s, 0.0s; --float: 11s; }
-    .layer:nth-child(2) { animation-delay: 0.3s, 0.4s; --float: 9s;  }
-    .layer:nth-child(3) { animation-delay: 0.6s, 0.8s; --float: 8s;  }
-    .layer:nth-child(4) { animation-delay: 0.9s, 1.2s; --float: 7s;  }
-
-    /* --- The two motions that make it feel calm --- */
-
-    /* 1) Entrance: fade up into place. */
-    @keyframes fadeRise {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0);    }
-    }
-
-    /* 2) Idle: a slow up-and-down "breath". */
-    @keyframes float {
-      0%, 100% { transform: translateY(0);     }
-      50%      { transform: translateY(-14px); }
-    }
-
-    /* Respect users who prefer no motion (accessibility). */
+    /* Accessibility: if the viewer prefers no motion, just show
+       the first frame without cycling. */
     @media (prefers-reduced-motion: reduce) {
-      .layer { animation: fadeRise 0.6s ease-out forwards; }
+      .frame { transition: none; }
     }
   </style>
 </head>
 
 <body>
-  <!-- ============================================================
-       THE SCENE
-       ------------------------------------------------------------
-       Each .layer is one SVG, drawn back-to-front (first = furthest
-       back). The data-depth number controls parallax: 0 = doesn't
-       move, higher = moves more with the mouse.
-
-       TO USE YOUR OWN ART:
-         Drop your file into the svg/ folder, then change the
-         src="svg/…​.svg" below to your filename. Add or remove
-         <div class="layer"> blocks to match how many you have.
-       ============================================================ -->
-  <div class="stage" id="stage">
-
-    <div class="layer" data-depth="0.6">
-      <img src="svg/sky.svg" alt="" />
-    </div>
-
-    <div class="layer" data-depth="1.4">
-      <img src="svg/clouds.svg" alt="" />
-    </div>
-
-    <div class="layer" data-depth="2.2">
-      <img src="svg/hills-back.svg" alt="" />
-    </div>
-
-    <div class="layer" data-depth="3.4">
-      <img src="svg/hills-front.svg" alt="" />
-    </div>
-
-  </div>
+  <!-- Frames get built by the script into this stage. -->
+  <div class="stage" id="stage"></div>
 
   <script>
-    // ============================================================
-    // PARALLAX: layers drift gently as the mouse moves.
-    // Nothing here needs editing — it reads data-depth from each
-    // layer automatically. Tune the feel with --parallax in the CSS.
-    // ============================================================
-    const stage  = document.getElementById('stage');
-    const layers = Array.from(document.querySelectorAll('.layer'));
+    /* ============================================================
+       1) YOUR FRAMES — in play order.
+          Put your files in the svg/ folder and list them here.
+          Add or remove lines to match how many frames you have.
+       ============================================================ */
+    const FRAMES = [
+      'svg/frame-1.svg',
+      'svg/frame-2.svg',
+      'svg/frame-3.svg',
+    ];
 
-    // Read the max drift distance from the CSS variable.
-    const maxDrift = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue('--parallax')
-    ) || 18;
+    /* ============================================================
+       2) TIMING — how long each frame stays on screen (ms).
+          1000 = 1 second.  Lower = faster animation.
+       ============================================================ */
+    const FRAME_DURATION = 2000;
 
-    let targetX = 0, targetY = 0;   // where the mouse wants layers to go
-    let curX = 0,    curY = 0;      // where they currently are (eased)
+    /* ------------------------------------------------------------
+       Engine below — you don't need to edit this.
+       ------------------------------------------------------------ */
+    const stage = document.getElementById('stage');
 
-    stage.addEventListener('mousemove', (e) => {
-      // Convert mouse position to a -1 … 1 range from the center.
-      const rect = stage.getBoundingClientRect();
-      targetX = ((e.clientX - rect.left) / rect.width  - 0.5) * 2;
-      targetY = ((e.clientY - rect.top)  / rect.height - 0.5) * 2;
+    // Build one <div class="frame"> per SVG.
+    const frameEls = FRAMES.map((src) => {
+      const div = document.createElement('div');
+      div.className = 'frame';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      div.appendChild(img);
+      stage.appendChild(div);
+      return div;
     });
 
-    // When the mouse leaves, ease everything back to center.
-    stage.addEventListener('mouseleave', () => { targetX = 0; targetY = 0; });
+    let current = 0;
+    frameEls[0]?.classList.add('is-visible');   // show the first frame
 
-    // Smoothly animate toward the target every frame (this is what
-    // makes the parallax feel soft instead of snappy).
-    function tick() {
-      curX += (targetX - curX) * 0.06;
-      curY += (targetY - curY) * 0.06;
+    const prefersReduced =
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      for (const layer of layers) {
-        const depth = parseFloat(layer.dataset.depth) || 0;
-        const dx = -curX * maxDrift * depth;
-        const dy = -curY * maxDrift * depth;
-        // We only set a CSS variable; the float keyframe handles the
-        // vertical breathing, so the two motions don't fight.
-        layer.style.setProperty('--px', dx.toFixed(2) + 'px');
-        layer.style.setProperty('--py', dy.toFixed(2) + 'px');
-        layer.style.translate = dx.toFixed(2) + 'px ' + dy.toFixed(2) + 'px';
-      }
-      requestAnimationFrame(tick);
+    // Advance to the next frame, looping back to the start.
+    function nextFrame() {
+      frameEls[current].classList.remove('is-visible');
+      current = (current + 1) % frameEls.length;
+      frameEls[current].classList.add('is-visible');
     }
-    requestAnimationFrame(tick);
+
+    if (frameEls.length > 1 && !prefersReduced) {
+      setInterval(nextFrame, FRAME_DURATION);
+    }
   </script>
 </body>
 </html>
