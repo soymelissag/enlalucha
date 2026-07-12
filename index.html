@@ -171,6 +171,17 @@
             </g>
           </g>
         </g>
+
+        <!-- a distant, higher flock, for a sense of depth -->
+        <g stroke="#3a3a3a" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.55">
+          <animateTransform attributeName="transform" type="translate"
+            values="-160 84; 480 58; 1220 92" keyTimes="0;0.5;1"
+            dur="46s" begin="-6s" repeatCount="indefinite" />
+          <g transform="translate(0 0) scale(0.5)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.5;1 1" dur="0.6s" repeatCount="indefinite" additive="sum"/></g>
+          <g transform="translate(-30 12) scale(0.44)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.45;1 1" dur="0.66s" repeatCount="indefinite" additive="sum"/></g>
+          <g transform="translate(30 14) scale(0.44)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.48;1 1" dur="0.7s" repeatCount="indefinite" additive="sum"/></g>
+          <g transform="translate(-60 24) scale(0.38)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.5;1 1" dur="0.62s" repeatCount="indefinite" additive="sum"/></g>
+        </g>
       </svg>
     </div>
   </div>
@@ -233,6 +244,38 @@
         current = (current + 1) % frameEls.length;
         show(current);
       }, FRAME_DURATION);
+    }
+
+    // Floating dust motes catching the light — that dreamy dust-in-sunbeam
+    // feeling. Sprinkled across the scene, each drifting and twinkling.
+    if (!prefersReduced) {
+      const NS = 'http://www.w3.org/2000/svg';
+      const lifeSvg = life.querySelector('svg');
+      for (let i = 0; i < 26; i++) {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', (Math.random() * 1018).toFixed(1));
+        c.setAttribute('cy', (240 + Math.random() * 980).toFixed(1));
+        c.setAttribute('r', (1.4 + Math.random() * 2.2).toFixed(2));
+        c.setAttribute('fill', '#fff3c4');
+        const move = document.createElementNS(NS, 'animateTransform');
+        move.setAttribute('attributeName', 'transform');
+        move.setAttribute('type', 'translate');
+        const dx = (Math.random() * 40 - 20).toFixed(1);
+        const dy = (-(28 + Math.random() * 60)).toFixed(1);
+        move.setAttribute('values', '0 0; ' + dx + ' ' + dy + '; 0 0');
+        move.setAttribute('dur', (9 + Math.random() * 10).toFixed(1) + 's');
+        move.setAttribute('repeatCount', 'indefinite');
+        move.setAttribute('begin', (-Math.random() * 10).toFixed(1) + 's');
+        c.appendChild(move);
+        const twinkle = document.createElementNS(NS, 'animate');
+        twinkle.setAttribute('attributeName', 'opacity');
+        twinkle.setAttribute('values', '0; 0.7; 0');
+        twinkle.setAttribute('dur', (5 + Math.random() * 6).toFixed(1) + 's');
+        twinkle.setAttribute('repeatCount', 'indefinite');
+        twinkle.setAttribute('begin', (-Math.random() * 8).toFixed(1) + 's');
+        c.appendChild(twinkle);
+        lifeSvg.appendChild(c);
+      }
     }
   </script>
 </body>
