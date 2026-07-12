@@ -1,229 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>En la lucha — SVG animation</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>En la lucha — interactive scene</title>
+<style>
+  :root{
+    --ground-top:#f4efe7; --ground-bottom:#e6dccd;
+    --ink:#4a3c31; --paper:rgba(255,253,240,0.92); --accent:#c56a4a;
+    --glass:rgba(255,255,255,0.42); --glass-bd:rgba(255,255,255,0.6);
+    --track:#e8d3a5; --on:#79a75b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --ground-top:#26211c; --ground-bottom:#181410; --ink:#efe6da; --paper:rgba(38,32,26,0.94); --glass:rgba(40,34,28,0.4); --glass-bd:rgba(255,255,255,0.18); --track:#4a4030; }
+  }
+  :root[data-theme="light"]{ --ground-top:#f4efe7; --ground-bottom:#e6dccd; --ink:#4a3c31; --paper:rgba(255,253,240,0.92); --glass:rgba(255,255,255,0.42); --glass-bd:rgba(255,255,255,0.6); --track:#e8d3a5; }
+  :root[data-theme="dark"]{ --ground-top:#26211c; --ground-bottom:#181410; --ink:#efe6da; --paper:rgba(38,32,26,0.94); --glass:rgba(40,34,28,0.4); --glass-bd:rgba(255,255,255,0.18); --track:#4a4030; }
 
-  <style>
-    /* ============================================================
-       CALM / GHIBLI-STYLE SVG ANIMATION
-       ------------------------------------------------------------
-       Your drawings are the "scenes". On top of them lives a layer
-       of real moving shapes — birds, clouds, sun glow — so the
-       picture feels alive instead of like a slideshow. The camera
-       also drifts slowly, and scenes dissolve softly into one another.
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{ min-height:100vh; overflow:hidden;
+    background:linear-gradient(180deg,var(--ground-top),var(--ground-bottom));
+    color:var(--ink);
+    font-family:ui-rounded,'SF Pro Rounded','Hiragino Maru Gothic ProN','Segoe UI',system-ui,-apple-system,sans-serif;
+    display:flex; align-items:center; justify-content:center; }
 
-       You mostly edit:
-         1) The FRAMES list in the <script>
-         2) FRAME_DURATION (pacing) just below it
-         3) The background colors in :root
-       The moving birds/clouds live in the <svg class="life"> markup.
-       ============================================================ */
+  #scene{ position:relative; height:min(92vh,940px); aspect-ratio:1018 / 1364; overflow:hidden;
+    border-radius:14px; box-shadow:0 26px 70px -26px rgba(40,30,16,.5); }
+  .world{ position:absolute; inset:0; }
+  .frames-wrap{ position:absolute; inset:0; z-index:1; will-change:transform; }
+  .frame{ position:absolute; inset:0; opacity:0; transition:opacity 1.8s ease-in-out; will-change:opacity; }
+  .frame.is-visible{ opacity:1; }
+  .frame img{ width:100%; height:100%; object-fit:contain; transform-origin:center; will-change:transform; -webkit-user-drag:none; user-select:none; }
+  .frame.is-visible img{ animation:kenburns 8s ease-out both; }
+  @keyframes kenburns{ from{ transform:scale(1.0) translate(0,0);} to{ transform:scale(1.06) translate(var(--kb-x,-1.6%),var(--kb-y,-1%)); } }
 
-    :root {
-      --sky-top:    #f4efe7;   /* soft warm neutral so the art pops */
-      --sky-bottom: #e6dccd;
-    }
+  .dapple{ position:absolute; inset:0; z-index:2; pointer-events:none; mix-blend-mode:soft-light; animation:dappleBreath 11s ease-in-out infinite; will-change:transform,opacity; }
+  .dapple svg{ width:100%; height:100%; display:block; }
+  @keyframes dappleBreath{ 0%,100%{ opacity:.55;} 50%{ opacity:.85;} }
+  .life{ position:absolute; inset:0; z-index:3; pointer-events:none; will-change:transform; }
+  .life svg{ width:100%; height:100%; display:block; }
+  .vignette{ position:absolute; inset:0; z-index:4; pointer-events:none; border-radius:14px;
+    box-shadow: inset 0 0 130px 26px rgba(30,20,10,.30); }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
+  #grain{ position:fixed; inset:0; z-index:60; pointer-events:none; mix-blend-mode:soft-light; opacity:.9; }
 
-    body {
-      min-height: 100vh;
-      background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      font-family: system-ui, sans-serif;
-    }
+  .ui{ position:fixed; top:22px; left:0; width:100%; padding:0 22px; z-index:100; pointer-events:none;
+    display:flex; align-items:center; justify-content:space-between; }
+  .title{ font-weight:800; letter-spacing:.18em; text-transform:uppercase; font-size:12px; opacity:.82; }
+  .btn{ pointer-events:auto; background:var(--glass); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    border:2px solid var(--glass-bd); color:var(--ink); font:inherit; font-weight:800; font-size:12px;
+    letter-spacing:.09em; text-transform:uppercase; padding:11px 20px; border-radius:26px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+    transition:transform .25s cubic-bezier(.175,.885,.32,1.275), background .25s; }
+  .btn:hover{ background:rgba(255,255,255,.62); }
+  .btn:active{ transform:scale(.92); }
+  .btn.icon{ padding:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+  .btn:focus-visible{ outline:3px solid var(--accent); outline-offset:2px; }
 
-    /* The framed stage. Its shape matches the artwork so the moving
-       birds/clouds line up exactly with the sky in the picture. */
-    .stage {
-      position: relative;
-      height: min(94vh, 960px);
-      aspect-ratio: 1018 / 1364;
-      overflow: hidden;
-      border-radius: 4px;
-      box-shadow: 0 22px 60px -22px rgba(40, 30, 16, 0.45);
-    }
+  #overlay{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+    background:rgba(74,60,49,.24); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    opacity:0; pointer-events:none; transition:opacity .35s ease; }
+  #overlay.active{ opacity:1; pointer-events:auto; }
+  .modal{ width:min(340px,88vw); background:var(--paper); border:4px solid rgba(255,255,255,.85);
+    border-radius:32px; padding:30px; box-shadow:0 24px 60px rgba(0,0,0,.24);
+    transform:translateY(16px); transition:transform .35s cubic-bezier(.175,.885,.32,1.275); }
+  #overlay.active .modal{ transform:translateY(0); }
+  .modal h2{ text-align:center; font-size:20px; font-weight:800; margin-bottom:22px; }
+  .group{ margin-bottom:20px; }
+  .row{ display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:13px; opacity:.92; margin-bottom:10px; }
+  .row span:last-child{ font-variant-numeric:tabular-nums; opacity:.7; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:6px; background:var(--track); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; border:3px solid var(--accent); cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,.15); }
+  input[type=range]::-moz-range-thumb{ width:22px; height:22px; border-radius:50%; background:#fff; border:3px solid var(--accent); cursor:pointer; }
+  .toggle{ position:relative; width:50px; height:28px; display:inline-block; }
+  .toggle input{ opacity:0; width:0; height:0; }
+  .sw{ position:absolute; inset:0; background:var(--track); border-radius:34px; transition:.35s; cursor:pointer; }
+  .sw:before{ content:""; position:absolute; width:20px; height:20px; left:4px; bottom:4px; background:#fff; border-radius:50%; transition:.35s; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .toggle input:checked + .sw{ background:var(--on); }
+  .toggle input:checked + .sw:before{ transform:translateX(22px); }
+  .close{ display:block; margin:6px auto 0; background:var(--ink); color:#fff; border:none; padding:12px 28px; border-radius:24px; font:inherit; font-weight:800; font-size:13px; cursor:pointer; transition:transform .2s; }
+  .close:active{ transform:scale(.95); }
 
-    /* Each scene fills the stage, cross-dissolving softly. */
-    .frame {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 1.8s ease-in-out;
-      will-change: opacity;
-    }
-    .frame.is-visible { opacity: 1; }
-
-    .frame img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transform-origin: center;
-      will-change: transform;
-      -webkit-user-drag: none;
-      user-select: none;
-    }
-
-    /* The slow "camera": a gentle zoom + drift while a scene is up. */
-    .frame.is-visible img { animation: kenburns 8s ease-out both; }
-    @keyframes kenburns {
-      from { transform: scale(1.0)  translate(0, 0); }
-      to   { transform: scale(1.06) translate(var(--kb-x, -1.6%), var(--kb-y, -1%)); }
-    }
-
-    /* The living layer of moving shapes, aligned to the artwork. */
-    .life {
-      position: absolute;
-      inset: 0;
-      z-index: 5;
-      pointer-events: none;
-    }
-    .life svg { width: 100%; height: 100%; display: block; }
-
-    /* Dappled sunlight through leaves: a warm, soft light/shade texture
-       that drifts and shimmers over the whole scene, gently blended in.
-       'soft-light' means the bright bits warm the art and the dark bits
-       shade it, without ever hiding your drawing. */
-    .dapple {
-      position: absolute;
-      inset: 0;
-      z-index: 4;
-      pointer-events: none;
-      mix-blend-mode: soft-light;
-      animation: dappleBreath 11s ease-in-out infinite;
-    }
-    .dapple svg { width: 100%; height: 100%; display: block; }
-    @keyframes dappleBreath {
-      0%, 100% { opacity: 0.55; }   /* leaves still-ish */
-      50%      { opacity: 0.85; }   /* a gust, more sun gets through */
-    }
-
-    /* Accessibility: hold still for viewers who prefer no motion. */
-    @media (prefers-reduced-motion: reduce) {
-      .frame { transition: none; }
-      .frame.is-visible img { animation: none; }
-      .life { display: none; }
-      .dapple { display: none; }
-    }
-  </style>
+  @media (prefers-reduced-motion: reduce){
+    .frame{ transition:none; } .frame.is-visible img{ animation:none; }
+    .life,.dapple,#grain{ display:none; }
+  }
+</style>
 </head>
-
 <body>
-  <div class="stage" id="stage">
-    <!-- Scenes get built here by the script -->
-
-    <!-- Dappled sunlight through leaves: a soft warm light/shade texture
-         that slowly drifts and shimmers over the scene. -->
-    <div class="dapple" aria-hidden="true">
+  <div id="scene">
+    <div class="world">
+      <div class="frames-wrap"></div>
+      <div class="dapple" aria-hidden="true">
       <svg viewBox="0 0 1018 1364" preserveAspectRatio="xMidYMid slice">
         <defs>
           <filter id="dap" x="-15%" y="-15%" width="130%" height="130%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.028"
-                          numOctaves="2" seed="5" stitchTiles="stitch" result="n">
-              <animate attributeName="baseFrequency" dur="15s" repeatCount="indefinite"
-                       values="0.02 0.028; 0.023 0.032; 0.02 0.028" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.028" numOctaves="2" seed="5" stitchTiles="stitch" result="n">
+              <animate attributeName="baseFrequency" dur="15s" repeatCount="indefinite" values="0.02 0.028; 0.023 0.032; 0.02 0.028"/>
             </feTurbulence>
-            <!-- keep ONLY the brightest 'gaps' as warm sun-spots; the rest
-                 stays fully transparent so your art stays crisp -->
-            <feColorMatrix in="n" type="matrix"
-              values="0    0    0   0  1
-                      0    0    0   0  0.9
-                      0    0    0   0  0.7
-                      1.1  1.1  1.1 0 -2.05" />
-            <feGaussianBlur stdDeviation="5" />
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 0.9  0 0 0 0 0.7  1.1 1.1 1.1 0 -2.05"/>
+            <feGaussianBlur stdDeviation="5"/>
           </filter>
         </defs>
-        <rect width="1018" height="1364" filter="url(#dap)">
-          <animateTransform attributeName="transform" type="translate"
-            values="0 0; -52 34; 0 0" dur="30s" repeatCount="indefinite" />
-        </rect>
+        <rect width="1018" height="1364" filter="url(#dap)"><animateTransform attributeName="transform" type="translate" values="0 0; -52 34; 0 0" dur="30s" repeatCount="indefinite"/></rect>
       </svg>
     </div>
-
-    <!-- The living layer: real shapes that move (birds, clouds, sun).
-         Coordinates match the artwork (viewBox 1018 x 1364). -->
-    <div class="life" aria-hidden="true">
+      <div class="life" aria-hidden="true">
       <svg viewBox="0 0 1018 1364" preserveAspectRatio="xMidYMid meet">
         <defs>
-          <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="11" />
-          </filter>
+          <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="11"/></filter>
           <radialGradient id="sun" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"  stop-color="#fff7e6" stop-opacity="0.55" />
-            <stop offset="55%" stop-color="#fff7e6" stop-opacity="0.14" />
-            <stop offset="100%" stop-color="#fff7e6" stop-opacity="0" />
+            <stop offset="0%" stop-color="#fff7e6" stop-opacity="0.55"/><stop offset="55%" stop-color="#fff7e6" stop-opacity="0.14"/><stop offset="100%" stop-color="#fff7e6" stop-opacity="0"/>
           </radialGradient>
         </defs>
-
-        <!-- soft sun glow, breathing -->
-        <circle cx="880" cy="150" r="210" fill="url(#sun)">
-          <animate attributeName="opacity" values="0.5;0.85;0.5" dur="9s" repeatCount="indefinite" />
-        </circle>
-
-        <!-- drifting clouds -->
+        <circle cx="880" cy="150" r="210" fill="url(#sun)"><animate attributeName="opacity" values="0.5;0.85;0.5" dur="9s" repeatCount="indefinite"/></circle>
         <g filter="url(#soft)" fill="#ffffff">
-          <ellipse cx="0" cy="110" rx="150" ry="30" opacity="0.45">
-            <animateTransform attributeName="transform" type="translate"
-              from="-360 0" to="1380 0" dur="74s" begin="0s" repeatCount="indefinite" />
-          </ellipse>
-          <ellipse cx="0" cy="200" rx="205" ry="42" opacity="0.4">
-            <animateTransform attributeName="transform" type="translate"
-              from="-420 0" to="1440 0" dur="96s" begin="-30s" repeatCount="indefinite" />
-          </ellipse>
-          <ellipse cx="0" cy="70" rx="110" ry="24" opacity="0.5">
-            <animateTransform attributeName="transform" type="translate"
-              from="-300 0" to="1320 0" dur="62s" begin="-48s" repeatCount="indefinite" />
-          </ellipse>
+          <ellipse cx="0" cy="110" rx="150" ry="30" opacity="0.45"><animateTransform attributeName="transform" type="translate" from="-360 0" to="1380 0" dur="74s" begin="0s" repeatCount="indefinite"/></ellipse>
+          <ellipse cx="0" cy="200" rx="205" ry="42" opacity="0.4"><animateTransform attributeName="transform" type="translate" from="-420 0" to="1440 0" dur="96s" begin="-30s" repeatCount="indefinite"/></ellipse>
+          <ellipse cx="0" cy="70" rx="110" ry="24" opacity="0.5"><animateTransform attributeName="transform" type="translate" from="-300 0" to="1320 0" dur="62s" begin="-48s" repeatCount="indefinite"/></ellipse>
         </g>
-
-        <!-- a small flock of birds, flying + flapping -->
         <g stroke="#2b2b2b" stroke-width="3.2" stroke-linecap="round" fill="none" opacity="0.8">
-          <g>
-            <animateTransform attributeName="transform" type="translate"
-              values="-120 250; 300 175; 640 225; 1140 150" keyTimes="0;0.34;0.66;1"
-              dur="27s" begin="0s" repeatCount="indefinite" calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
-            <g>
-              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
-              <animateTransform attributeName="transform" type="scale"
-                values="1 1; 1 0.45; 1 1" dur="0.5s" repeatCount="indefinite" additive="sum" />
-            </g>
-          </g>
-          <g>
-            <animateTransform attributeName="transform" type="translate"
-              values="-200 210; 260 150; 680 200; 1180 130" keyTimes="0;0.34;0.66;1"
-              dur="33s" begin="-11s" repeatCount="indefinite" calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
-            <g transform="scale(0.82)">
-              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
-              <animateTransform attributeName="transform" type="scale"
-                values="1 1; 1 0.5; 1 1" dur="0.58s" repeatCount="indefinite" additive="sum" />
-            </g>
-          </g>
-          <g>
-            <animateTransform attributeName="transform" type="translate"
-              values="-160 285; 320 205; 700 255; 1150 185" keyTimes="0;0.34;0.66;1"
-              dur="30s" begin="-20s" repeatCount="indefinite" calcMode="spline"
-              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
-            <g transform="scale(0.9)">
-              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
-              <animateTransform attributeName="transform" type="scale"
-                values="1 1; 1 0.42; 1 1" dur="0.47s" repeatCount="indefinite" additive="sum" />
-            </g>
-          </g>
+          <g><animateTransform attributeName="transform" type="translate" values="-120 250; 300 175; 640 225; 1140 150" keyTimes="0;0.34;0.66;1" dur="27s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"/>
+            <g><path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1; 1 0.45; 1 1" dur="0.5s" repeatCount="indefinite" additive="sum"/></g></g>
+          <g><animateTransform attributeName="transform" type="translate" values="-200 210; 260 150; 680 200; 1180 130" keyTimes="0;0.34;0.66;1" dur="33s" begin="-11s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"/>
+            <g transform="scale(0.82)"><path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1; 1 0.5; 1 1" dur="0.58s" repeatCount="indefinite" additive="sum"/></g></g>
+          <g><animateTransform attributeName="transform" type="translate" values="-160 285; 320 205; 700 255; 1150 185" keyTimes="0;0.34;0.66;1" dur="30s" begin="-20s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"/>
+            <g transform="scale(0.9)"><path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1; 1 0.42; 1 1" dur="0.47s" repeatCount="indefinite" additive="sum"/></g></g>
         </g>
-
-        <!-- a distant, higher flock, for a sense of depth -->
         <g stroke="#3a3a3a" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.55">
-          <animateTransform attributeName="transform" type="translate"
-            values="-160 84; 480 58; 1220 92" keyTimes="0;0.5;1"
-            dur="46s" begin="-6s" repeatCount="indefinite" />
+          <animateTransform attributeName="transform" type="translate" values="-160 84; 480 58; 1220 92" keyTimes="0;0.5;1" dur="46s" begin="-6s" repeatCount="indefinite"/>
           <g transform="translate(0 0) scale(0.5)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.5;1 1" dur="0.6s" repeatCount="indefinite" additive="sum"/></g>
           <g transform="translate(-30 12) scale(0.44)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.45;1 1" dur="0.66s" repeatCount="indefinite" additive="sum"/></g>
           <g transform="translate(30 14) scale(0.44)"><path d="M-15 0 Q-7 -9 0 -3 Q7 -9 15 0"/><animateTransform attributeName="transform" type="scale" values="1 1;1 0.48;1 1" dur="0.7s" repeatCount="indefinite" additive="sum"/></g>
@@ -231,99 +137,120 @@
         </g>
       </svg>
     </div>
+      <div class="vignette"></div>
+    </div>
   </div>
 
+  <div class="ui">
+    <button class="btn" id="wander">Wander</button>
+    <div class="title">En la lucha</div>
+    <button class="btn icon" id="gear" aria-label="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+
+  <div id="overlay">
+    <div class="modal" role="dialog" aria-label="Scene settings">
+      <h2>Scene Kit</h2>
+      <div class="group"><div class="row"><span>Parallax</span><span id="pv">50%</span></div><input type="range" id="ps" min="0" max="100" value="50"></div>
+      <div class="group"><div class="row"><span>Paper grain</span><span id="gv">12%</span></div><input type="range" id="gs" min="0" max="40" value="12"></div>
+      <div class="group"><div class="row"><span>Scene pace</span><span id="cv">5.2s</span></div><input type="range" id="cs" min="30" max="90" value="52"></div>
+      <div class="group"><div class="row" style="margin-bottom:0"><span>Forest ambience</span><label class="toggle"><input type="checkbox" id="amb"><span class="sw"></span></label></div></div>
+      <button class="close" id="close">Return</button>
+    </div>
+  </div>
+
+  <canvas id="grain"></canvas>
+
   <script>
-    /* ============================================================
-       1) YOUR FRAMES — in play order.
-       ============================================================ */
-    const FRAMES = [
-      'svg/frame-1.svg',
-      'svg/frame-2.svg',
-      'svg/frame-3.svg',
-    ];
+  /* Editable knobs: your frames + pacing. The rest is the scene engine. */
+  
+  const SRCS = ['svg/frame-1.svg','svg/frame-2.svg','svg/frame-3.svg'];
+  const DRIFTS = [["-2.2%","-1.3%"],[" 1.9%","-1.1%"],["-1.7%"," 1.5%"]];
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* 2) PACING — how long each scene holds (ms). Bigger = calmer. */
-    const FRAME_DURATION = 5200;
+  const stage = document.getElementById('scene');
+  const framesWrap = stage.querySelector('.frames-wrap');
+  const dappleEl = stage.querySelector('.dapple');
+  const lifeEl = stage.querySelector('.life');
 
-    /* ---- Engine (no need to edit) ---- */
-    const stage = document.getElementById('stage');
-    const life  = stage.querySelector('.life');   // keep birds on top
+  const frames = SRCS.map((src,i)=>{
+    const d=document.createElement('div'); d.className='frame';
+    const img=document.createElement('img'); img.src=src; img.alt='Street scene, frame '+(i+1);
+    img.style.setProperty('--kb-x',DRIFTS[i%DRIFTS.length][0]);
+    img.style.setProperty('--kb-y',DRIFTS[i%DRIFTS.length][1]);
+    d.appendChild(img); framesWrap.appendChild(d); return d;
+  });
+  function show(i){ const el=frames[i]; el.classList.add('is-visible');
+    const img=el.querySelector('img'); img.style.animation='none'; void img.offsetWidth; img.style.animation=''; }
+  let cur=0, dur=5200, timer=null;
+  function next(){ frames[cur].classList.remove('is-visible'); cur=(cur+1)%frames.length; show(cur); }
+  function startTimer(){ clearInterval(timer); if(frames.length>1 && !reduced) timer=setInterval(next,dur); }
+  show(0); startTimer();
 
-    const DRIFTS = [
-      ['-2.2%', '-1.3%'],
-      [' 1.9%', '-1.1%'],
-      ['-1.7%', ' 1.5%'],
-    ];
+  // floating dust motes
+  if(!reduced){ const NS='http://www.w3.org/2000/svg'; const lifeSvg=lifeEl.querySelector('svg');
+    for(let i=0;i<26;i++){ const c=document.createElementNS(NS,'circle');
+      c.setAttribute('cx',(Math.random()*1018).toFixed(1)); c.setAttribute('cy',(240+Math.random()*980).toFixed(1)); c.setAttribute('r',(1.4+Math.random()*2.2).toFixed(2)); c.setAttribute('fill','#fff3c4');
+      const mv=document.createElementNS(NS,'animateTransform'); mv.setAttribute('attributeName','transform'); mv.setAttribute('type','translate');
+      const dx=(Math.random()*40-20).toFixed(1), dy=(-(28+Math.random()*60)).toFixed(1);
+      mv.setAttribute('values','0 0; '+dx+' '+dy+'; 0 0'); mv.setAttribute('dur',(9+Math.random()*10).toFixed(1)+'s'); mv.setAttribute('repeatCount','indefinite'); mv.setAttribute('begin',(-Math.random()*10).toFixed(1)+'s'); c.appendChild(mv);
+      const tw=document.createElementNS(NS,'animate'); tw.setAttribute('attributeName','opacity'); tw.setAttribute('values','0; 0.7; 0'); tw.setAttribute('dur',(5+Math.random()*6).toFixed(1)+'s'); tw.setAttribute('repeatCount','indefinite'); tw.setAttribute('begin',(-Math.random()*8).toFixed(1)+'s'); c.appendChild(tw);
+      lifeSvg.appendChild(c); } }
 
-    const frameEls = FRAMES.map((src, i) => {
-      const div = document.createElement('div');
-      div.className = 'frame';
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = '';
-      const d = DRIFTS[i % DRIFTS.length];
-      img.style.setProperty('--kb-x', d[0]);
-      img.style.setProperty('--kb-y', d[1]);
-      div.appendChild(img);
-      stage.insertBefore(div, life);   // scenes go under the living layer
-      return div;
-    });
+  // parallax depth (mouse / touch drag)
+  let tx=0,ty=0,cx=0,cy=0,sens=1;
+  window.addEventListener('pointermove',(e)=>{ tx=(e.clientX/window.innerWidth-0.5)*2; ty=(e.clientY/window.innerHeight-0.5)*2; });
+  window.addEventListener('pointerleave',()=>{ tx=0; ty=0; });
+  if(!reduced){ (function loop(){ cx+=(tx-cx)*0.06; cy+=(ty-cy)*0.06; const f=sens;
+    framesWrap.style.transform='scale(1.05) translate('+(-cx*8*f).toFixed(2)+'px,'+(-cy*6*f).toFixed(2)+'px)';
+    dappleEl.style.transform='translate('+(-cx*15*f).toFixed(2)+'px,'+(-cy*11*f).toFixed(2)+'px)';
+    lifeEl.style.transform='translate('+(-cx*26*f).toFixed(2)+'px,'+(-cy*18*f).toFixed(2)+'px)';
+    requestAnimationFrame(loop); })(); }
 
-    function show(i) {
-      const el = frameEls[i];
-      el.classList.add('is-visible');
-      const img = el.querySelector('img');
-      img.style.animation = 'none';
-      void img.offsetWidth;
-      img.style.animation = '';
-    }
+  // paper / film grain (self-contained canvas, no external libs)
+  const gcv=document.getElementById('grain'); const gctx=gcv.getContext('2d');
+  let grainAmt=0.12, gw=0, gh=0;
+  const N=140, noise=document.createElement('canvas'); noise.width=N; noise.height=N; const nctx=noise.getContext('2d');
+  function resizeGrain(){ gw=gcv.width=window.innerWidth; gh=gcv.height=window.innerHeight; }
+  window.addEventListener('resize',resizeGrain); resizeGrain();
+  function makeNoise(){ const img=nctx.createImageData(N,N);
+    for(let i=0;i<img.data.length;i+=4){ const v=90+Math.random()*90; img.data[i]=v; img.data[i+1]=v*0.94; img.data[i+2]=v*0.8; img.data[i+3]=255; }
+    nctx.putImageData(img,0,0); }
+  let lastStep=-1, t0=performance.now();
+  function grainLoop(){ requestAnimationFrame(grainLoop);
+    if(grainAmt<=0){ gctx.clearRect(0,0,gw,gh); return; }
+    const step=Math.floor((performance.now()-t0)/1000*14);
+    if(step!==lastStep){ lastStep=step; makeNoise();
+      gctx.clearRect(0,0,gw,gh); gctx.globalAlpha=grainAmt; gctx.imageSmoothingEnabled=true; gctx.drawImage(noise,0,0,gw,gh); }
+  }
+  if(!reduced) grainLoop();
 
-    let current = 0;
-    show(0);
+  // ambient forest sound (procedural wind, only on user toggle)
+  let audioCtx=null, wind=null;
+  function startAmbient(){ try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const len=2*audioCtx.sampleRate, buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate), dat=buf.getChannelData(0); let last=0;
+    for(let i=0;i<len;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; dat[i]=last*3.2; }
+    const src=audioCtx.createBufferSource(); src.buffer=buf; src.loop=true;
+    const flt=audioCtx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=520;
+    const g=audioCtx.createGain(); g.gain.value=0;
+    src.connect(flt); flt.connect(g); g.connect(audioCtx.destination); src.start();
+    g.gain.linearRampToValueAtTime(0.07, audioCtx.currentTime+2);
+    const lfo=audioCtx.createOscillator(); lfo.frequency.value=0.05; const lg=audioCtx.createGain(); lg.gain.value=170; lfo.connect(lg); lg.connect(flt.frequency); lfo.start();
+    wind={src,g,lfo}; }catch(e){} }
+  function stopAmbient(){ if(wind&&audioCtx){ const w=wind; w.g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+1);
+    setTimeout(()=>{ try{w.src.stop(); w.lfo.stop();}catch(e){} },1200); wind=null; } }
 
-    const prefersReduced =
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (frameEls.length > 1 && !prefersReduced) {
-      setInterval(() => {
-        frameEls[current].classList.remove('is-visible');
-        current = (current + 1) % frameEls.length;
-        show(current);
-      }, FRAME_DURATION);
-    }
-
-    // Floating dust motes catching the light — that dreamy dust-in-sunbeam
-    // feeling. Sprinkled across the scene, each drifting and twinkling.
-    if (!prefersReduced) {
-      const NS = 'http://www.w3.org/2000/svg';
-      const lifeSvg = life.querySelector('svg');
-      for (let i = 0; i < 26; i++) {
-        const c = document.createElementNS(NS, 'circle');
-        c.setAttribute('cx', (Math.random() * 1018).toFixed(1));
-        c.setAttribute('cy', (240 + Math.random() * 980).toFixed(1));
-        c.setAttribute('r', (1.4 + Math.random() * 2.2).toFixed(2));
-        c.setAttribute('fill', '#fff3c4');
-        const move = document.createElementNS(NS, 'animateTransform');
-        move.setAttribute('attributeName', 'transform');
-        move.setAttribute('type', 'translate');
-        const dx = (Math.random() * 40 - 20).toFixed(1);
-        const dy = (-(28 + Math.random() * 60)).toFixed(1);
-        move.setAttribute('values', '0 0; ' + dx + ' ' + dy + '; 0 0');
-        move.setAttribute('dur', (9 + Math.random() * 10).toFixed(1) + 's');
-        move.setAttribute('repeatCount', 'indefinite');
-        move.setAttribute('begin', (-Math.random() * 10).toFixed(1) + 's');
-        c.appendChild(move);
-        const twinkle = document.createElementNS(NS, 'animate');
-        twinkle.setAttribute('attributeName', 'opacity');
-        twinkle.setAttribute('values', '0; 0.7; 0');
-        twinkle.setAttribute('dur', (5 + Math.random() * 6).toFixed(1) + 's');
-        twinkle.setAttribute('repeatCount', 'indefinite');
-        twinkle.setAttribute('begin', (-Math.random() * 8).toFixed(1) + 's');
-        c.appendChild(twinkle);
-        lifeSvg.appendChild(c);
-      }
-    }
+  // UI wiring
+  const overlay=document.getElementById('overlay');
+  document.getElementById('gear').addEventListener('click',()=>overlay.classList.add('active'));
+  document.getElementById('close').addEventListener('click',()=>overlay.classList.remove('active'));
+  overlay.addEventListener('click',(e)=>{ if(e.target===overlay) overlay.classList.remove('active'); });
+  document.getElementById('wander').addEventListener('click',()=>{ next(); startTimer();
+    stage.animate([{transform:'scale(1)'},{transform:'scale(0.985)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'}); });
+  const ps=document.getElementById('ps'), gs=document.getElementById('gs'), cs=document.getElementById('cs'), amb=document.getElementById('amb');
+  ps.addEventListener('input',e=>{ sens=e.target.value/50; document.getElementById('pv').textContent=e.target.value+'%'; });
+  gs.addEventListener('input',e=>{ grainAmt=e.target.value/100; document.getElementById('gv').textContent=e.target.value+'%'; });
+  cs.addEventListener('input',e=>{ dur=e.target.value*100; document.getElementById('cv').textContent=(dur/1000).toFixed(1)+'s'; startTimer(); });
+  amb.addEventListener('change',e=>{ e.target.checked?startAmbient():stopAmbient(); });
   </script>
 </body>
 </html>
