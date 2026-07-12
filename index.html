@@ -42,6 +42,9 @@
   .life svg{ width:100%; height:100%; display:block; }
   .vignette{ position:absolute; inset:0; z-index:4; pointer-events:none; border-radius:14px;
     box-shadow: inset 0 0 130px 26px rgba(30,20,10,.30); }
+  .grade{ position:absolute; inset:0; z-index:5; pointer-events:none; opacity:0; will-change:opacity; }
+  .grade.warm{ background:#ff9a3d; mix-blend-mode:soft-light; }
+  .grade.night{ background:#141f45; mix-blend-mode:multiply; }
 
   #grain{ position:fixed; inset:0; z-index:60; pointer-events:none; mix-blend-mode:soft-light; opacity:.9; }
 
@@ -132,6 +135,9 @@
           <radialGradient id="sun" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stop-color="#fff7e6" stop-opacity="0.55"/><stop offset="55%" stop-color="#fff7e6" stop-opacity="0.14"/><stop offset="100%" stop-color="#fff7e6" stop-opacity="0"/>
           </radialGradient>
+          <radialGradient id="ff" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#eaff9c" stop-opacity="1"/><stop offset="42%" stop-color="#c8f06a" stop-opacity="0.5"/><stop offset="100%" stop-color="#c8f06a" stop-opacity="0"/>
+          </radialGradient>
         </defs>
         <circle cx="880" cy="150" r="210" fill="url(#sun)"><animate attributeName="opacity" values="0.5;0.85;0.5" dur="9s" repeatCount="indefinite"/></circle>
         <g filter="url(#soft)" fill="#ffffff">
@@ -156,6 +162,8 @@
         </g>
       </svg>
     </div>
+      <div class="grade warm" id="grade-warm"></div>
+      <div class="grade night" id="grade-night"></div>
       <div class="vignette"></div>
     </div>
   </div>
@@ -172,6 +180,7 @@
       <div class="group"><div class="row"><span>Parallax</span><span id="pv">50%</span></div><input type="range" id="ps" min="0" max="100" value="50"></div>
       <div class="group"><div class="row"><span>Paper grain</span><span id="gv">12%</span></div><input type="range" id="gs" min="0" max="40" value="12"></div>
       <div class="group"><div class="row"><span>Scene pace</span><span id="cv">5.2s</span></div><input type="range" id="cs" min="30" max="90" value="52"></div>
+      <div class="group"><div class="row"><span>Time of day</span><span id="tv">Day</span></div><input type="range" id="ts" min="0" max="100" value="0"></div>
       <div class="group"><div class="row" style="margin-bottom:0"><span>Forest ambience</span><label class="toggle"><input type="checkbox" id="amb"><span class="sw"></span></label></div></div>
       <button class="close" id="close">Return</button>
     </div>
@@ -220,6 +229,19 @@
       mv.setAttribute('values','0 0; '+dx+' '+dy+'; 0 0'); mv.setAttribute('dur',(9+Math.random()*10).toFixed(1)+'s'); mv.setAttribute('repeatCount','indefinite'); mv.setAttribute('begin',(-Math.random()*10).toFixed(1)+'s'); c.appendChild(mv);
       const tw=document.createElementNS(NS,'animate'); tw.setAttribute('attributeName','opacity'); tw.setAttribute('values','0; 0.7; 0'); tw.setAttribute('dur',(5+Math.random()*6).toFixed(1)+'s'); tw.setAttribute('repeatCount','indefinite'); tw.setAttribute('begin',(-Math.random()*8).toFixed(1)+'s'); c.appendChild(tw);
       lifeSvg.appendChild(c); } }
+
+  // fireflies — created once, shown only at night (opacity set by Time slider)
+  let fireflies = null;
+  if(!reduced){ const NS='http://www.w3.org/2000/svg'; const lifeSvg2=lifeEl.querySelector('svg');
+    const fg=document.createElementNS(NS,'g'); fg.setAttribute('id','fireflies'); fg.setAttribute('opacity','0');
+    for(let i=0;i<14;i++){ const c=document.createElementNS(NS,'circle');
+      c.setAttribute('cx',(120+Math.random()*780).toFixed(0)); c.setAttribute('cy',(700+Math.random()*580).toFixed(0)); c.setAttribute('r',(5+Math.random()*5).toFixed(1)); c.setAttribute('fill','url(#ff)');
+      const mv=document.createElementNS(NS,'animateTransform'); mv.setAttribute('attributeName','transform'); mv.setAttribute('type','translate');
+      const a=()=>(Math.random()*60-30).toFixed(0), o=()=>(Math.random()*50-25).toFixed(0);
+      mv.setAttribute('values','0 0; '+a()+' '+o()+'; '+a()+' '+o()+'; 0 0'); mv.setAttribute('dur',(7+Math.random()*7).toFixed(1)+'s'); mv.setAttribute('repeatCount','indefinite'); mv.setAttribute('begin',(-Math.random()*7).toFixed(1)+'s'); c.appendChild(mv);
+      const bl=document.createElementNS(NS,'animate'); bl.setAttribute('attributeName','opacity'); bl.setAttribute('values','0.15; 1; 0.3; 0.9; 0.15'); bl.setAttribute('dur',(3+Math.random()*4).toFixed(1)+'s'); bl.setAttribute('repeatCount','indefinite'); bl.setAttribute('begin',(-Math.random()*5).toFixed(1)+'s'); c.appendChild(bl);
+      fg.appendChild(c); }
+    lifeSvg2.appendChild(fg); fireflies=fg; }
 
   // parallax depth (mouse / touch drag)
   let tx=0,ty=0,cx=0,cy=0,sens=1;
@@ -276,6 +298,24 @@
   gs.addEventListener('input',e=>{ grainAmt=e.target.value/100; document.getElementById('gv').textContent=e.target.value+'%'; });
   cs.addEventListener('input',e=>{ dur=e.target.value*100; document.getElementById('cv').textContent=(dur/1000).toFixed(1)+'s'; startTimer(); });
   amb.addEventListener('change',e=>{ e.target.checked?startAmbient():stopAmbient(); });
+
+  // day -> night grading
+  const gradeWarm=document.getElementById('grade-warm'), gradeNight=document.getElementById('grade-night'), worldEl=stage.querySelector('.world');
+  const rootStyle=document.documentElement.style;
+  const clamp01=x=>Math.max(0,Math.min(1,x));
+  const hx=h=>{h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+  const mix=(h1,h2,t)=>{const a=hx(h1),b=hx(h2); return 'rgb('+Math.round(a[0]+(b[0]-a[0])*t)+','+Math.round(a[1]+(b[1]-a[1])*t)+','+Math.round(a[2]+(b[2]-a[2])*t)+')';};
+  function setTimeOfDay(v){ const t=v/100;
+    const g=clamp01(1-Math.abs(t-0.55)/0.35), n=clamp01((t-0.45)/0.55), f=clamp01((t-0.6)/0.4);
+    if(gradeWarm) gradeWarm.style.opacity=(0.5*g).toFixed(3);
+    if(gradeNight) gradeNight.style.opacity=(0.55*n).toFixed(3);
+    if(worldEl) worldEl.style.filter='brightness('+(1-0.5*n).toFixed(3)+') saturate('+(1-0.28*n).toFixed(3)+') contrast('+(1+0.06*n).toFixed(3)+')';
+    if(fireflies) fireflies.setAttribute('opacity', f.toFixed(3));
+    rootStyle.setProperty('--ground-top', mix('#f4efe7','#1b2440',n));
+    rootStyle.setProperty('--ground-bottom', mix('#e6dccd','#0f1630',n));
+    const tv=document.getElementById('tv'); if(tv) tv.textContent = t<0.33?'Day': t<0.6?'Golden': t<0.82?'Dusk':'Night';
+  }
+  const ts=document.getElementById('ts'); if(ts) ts.addEventListener('input',e=>setTimeOfDay(+e.target.value));
 
   // title screen: fade away on "Enter"
   const intro=document.getElementById('intro');
