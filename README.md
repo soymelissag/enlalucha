@@ -1,48 +1,52 @@
-# En la lucha — SVG animation
+# En la lucha — SVG frame animation
 
-A calm, elegant animation built from layered SVG illustrations.
+A calm, elegant **frame-by-frame** animation (a flipbook) built from SVG
+illustrations. Each SVG is one frame; they play in order and loop.
 No build tools, no npm, no server needed.
 
 ## How to run it
 
-**Just double-click `index.html`** — it opens in your web browser and runs. That's it.
-
-## What it does
-
-- Each SVG sits in its own **layer**, stacked back-to-front.
-- On load, the layers **fade up** into place, one after another.
-- They gently **float** up and down forever (a slow "breath").
-- As you move your **mouse**, the layers **drift** at different speeds
-  (parallax), which gives a soft sense of depth.
+**Just double-click `index.html`** — it opens in your web browser and plays.
 
 ## Use your own illustrations
 
-1. Put your `.svg` file(s) into the **`svg/`** folder.
-2. Open **`index.html`** in a text editor and find the section marked
-   `THE SCENE`. Each illustration is one block like this:
+1. Put your `.svg` files into the **`svg/`** folder, named in play order,
+   e.g. `frame-1.svg`, `frame-2.svg`, `frame-3.svg` …
+2. Open **`index.html`** in a text editor and find the **`FRAMES`** list
+   near the bottom. List your files in the order they should play:
 
-   ```html
-   <div class="layer" data-depth="1.4">
-     <img src="svg/clouds.svg" alt="" />
-   </div>
+   ```js
+   const FRAMES = [
+     'svg/frame-1.svg',
+     'svg/frame-2.svg',
+     'svg/frame-3.svg',
+   ];
    ```
 
-   - Change `svg/clouds.svg` to your own filename.
-   - `data-depth` controls how much it moves with the mouse
-     (`0` = still, higher = more movement).
-   - Copy/paste a block to add a layer, or delete one to remove it.
-   - Order matters: the **first** block is the **furthest back**.
+   Add or remove lines to match how many frames you have.
 
-## Change the colors or speed
+## Adjust the timing and feel
 
-Open `index.html` and look at the top of the `<style>` block:
+Two settings, both near the bottom of `index.html`:
 
-```css
---sky-top:    #2a3550;   /* background gradient, top    */
---sky-bottom: #6d7f9e;   /* background gradient, bottom */
---parallax:   18px;      /* how far layers drift        */
+```js
+const FRAME_DURATION = 1400;   // how long each frame shows, in ms (1000 = 1s)
 ```
 
-The placeholder art (`svg/sky.svg`, `svg/clouds.svg`, `svg/hills-back.svg`,
-`svg/hills-front.svg`) is just a starting point — replace it with yours whenever
-you're ready.
+And in the `<style>` block:
+
+```css
+transition: opacity 1.2s ease-in-out;   /* the crossfade between frames */
+```
+
+- Bigger crossfade = softer, dreamier. Set it to `0s` for a hard
+  "flipbook" cut instead.
+- Change the background gradient at the top of `<style>`:
+
+  ```css
+  --sky-top:    #2a3550;
+  --sky-bottom: #6d7f9e;
+  ```
+
+The placeholder frames (`svg/frame-1.svg` … `svg/frame-6.svg`) are just a
+starting point — replace them with your own art whenever you're ready.
