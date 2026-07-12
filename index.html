@@ -86,11 +86,30 @@
     }
     .life svg { width: 100%; height: 100%; display: block; }
 
+    /* Dappled sunlight through leaves: a warm, soft light/shade texture
+       that drifts and shimmers over the whole scene, gently blended in.
+       'soft-light' means the bright bits warm the art and the dark bits
+       shade it, without ever hiding your drawing. */
+    .dapple {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      mix-blend-mode: soft-light;
+      animation: dappleBreath 11s ease-in-out infinite;
+    }
+    .dapple svg { width: 100%; height: 100%; display: block; }
+    @keyframes dappleBreath {
+      0%, 100% { opacity: 0.55; }   /* leaves still-ish */
+      50%      { opacity: 0.85; }   /* a gust, more sun gets through */
+    }
+
     /* Accessibility: hold still for viewers who prefer no motion. */
     @media (prefers-reduced-motion: reduce) {
       .frame { transition: none; }
       .frame.is-visible img { animation: none; }
       .life { display: none; }
+      .dapple { display: none; }
     }
   </style>
 </head>
@@ -98,6 +117,34 @@
 <body>
   <div class="stage" id="stage">
     <!-- Scenes get built here by the script -->
+
+    <!-- Dappled sunlight through leaves: a soft warm light/shade texture
+         that slowly drifts and shimmers over the scene. -->
+    <div class="dapple" aria-hidden="true">
+      <svg viewBox="0 0 1018 1364" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <filter id="dap" x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.02 0.028"
+                          numOctaves="2" seed="5" stitchTiles="stitch" result="n">
+              <animate attributeName="baseFrequency" dur="15s" repeatCount="indefinite"
+                       values="0.02 0.028; 0.023 0.032; 0.02 0.028" />
+            </feTurbulence>
+            <!-- keep ONLY the brightest 'gaps' as warm sun-spots; the rest
+                 stays fully transparent so your art stays crisp -->
+            <feColorMatrix in="n" type="matrix"
+              values="0    0    0   0  1
+                      0    0    0   0  0.9
+                      0    0    0   0  0.7
+                      1.1  1.1  1.1 0 -2.05" />
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+        </defs>
+        <rect width="1018" height="1364" filter="url(#dap)">
+          <animateTransform attributeName="transform" type="translate"
+            values="0 0; -52 34; 0 0" dur="30s" repeatCount="indefinite" />
+        </rect>
+      </svg>
+    </div>
 
     <!-- The living layer: real shapes that move (birds, clouds, sun).
          Coordinates match the artwork (viewBox 1018 x 1364). -->
