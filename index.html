@@ -9,19 +9,20 @@
     /* ============================================================
        CALM / GHIBLI-STYLE SVG ANIMATION
        ------------------------------------------------------------
-       Each SVG is one "scene". The camera slowly drifts across each
-       scene (like a hand-painted film), scenes softly dissolve into
-       one another, and clouds drift across the sky.
+       Your drawings are the "scenes". On top of them lives a layer
+       of real moving shapes — birds, clouds, sun glow — so the
+       picture feels alive instead of like a slideshow. The camera
+       also drifts slowly, and scenes dissolve softly into one another.
 
        You mostly edit:
-         1) The FRAMES list in the <script> (your files, in order)
-         2) The pacing knobs right below the frame list
+         1) The FRAMES list in the <script>
+         2) FRAME_DURATION (pacing) just below it
          3) The background colors in :root
+       The moving birds/clouds live in the <svg class="life"> markup.
        ============================================================ */
 
     :root {
-      /* Soft warm neutral ground so your colorful art pops. */
-      --sky-top:    #f4efe7;
+      --sky-top:    #f4efe7;   /* soft warm neutral so the art pops */
       --sky-bottom: #e6dccd;
     }
 
@@ -29,29 +30,32 @@
     html, body { height: 100%; }
 
     body {
+      min-height: 100vh;
       background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
       font-family: system-ui, sans-serif;
     }
 
-    /* The stage holds every scene, stacked in the same spot. */
+    /* The framed stage. Its shape matches the artwork so the moving
+       birds/clouds line up exactly with the sky in the picture. */
     .stage {
       position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;   /* keeps the slow camera drift tidy */
+      height: min(94vh, 960px);
+      aspect-ratio: 1018 / 1364;
+      overflow: hidden;
+      border-radius: 4px;
+      box-shadow: 0 22px 60px -22px rgba(40, 30, 16, 0.45);
     }
 
-    /* Each scene fills the stage and starts invisible.
-       Scenes cross-dissolve — soft, like a Ghibli scene change. */
+    /* Each scene fills the stage, cross-dissolving softly. */
     .frame {
       position: absolute;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       opacity: 0;
-      transition: opacity 1.8s ease-in-out;   /* the soft dissolve */
+      transition: opacity 1.8s ease-in-out;
       will-change: opacity;
     }
     .frame.is-visible { opacity: 1; }
@@ -59,59 +63,117 @@
     .frame img {
       width: 100%;
       height: 100%;
-      object-fit: contain;   /* show the whole illustration, no cropping */
+      object-fit: contain;
       transform-origin: center;
-      user-select: none;
-      -webkit-user-drag: none;
       will-change: transform;
+      -webkit-user-drag: none;
+      user-select: none;
     }
 
-    /* The "camera": a slow zoom + drift across the scene while it's
-       on screen. Each scene sets its own drift direction (--kb-x/y). */
-    .frame.is-visible img {
-      animation: kenburns 8s ease-out both;
-    }
+    /* The slow "camera": a gentle zoom + drift while a scene is up. */
+    .frame.is-visible img { animation: kenburns 8s ease-out both; }
     @keyframes kenburns {
       from { transform: scale(1.0)  translate(0, 0); }
-      to   { transform: scale(1.07) translate(var(--kb-x, -2%), var(--kb-y, -1%)); }
+      to   { transform: scale(1.06) translate(var(--kb-x, -1.6%), var(--kb-y, -1%)); }
     }
 
-    /* Drifting clouds — a soft, slow layer over the sky band only.
-       Kept faint so it reads as atmosphere, not stickers. */
-    .sky {
+    /* The living layer of moving shapes, aligned to the artwork. */
+    .life {
       position: absolute;
       inset: 0;
-      z-index: 3;
+      z-index: 5;
       pointer-events: none;
-      overflow: hidden;
-      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 38%);
-              mask-image: linear-gradient(to bottom, #000 0%, #000 18%, transparent 38%);
     }
-    .cloud {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(closest-side, rgba(255,255,255,0.5), rgba(255,255,255,0) 70%);
-      filter: blur(10px);
-      opacity: 0.38;
-      animation: drift linear infinite;
-    }
-    @keyframes drift {
-      from { transform: translateX(-40vw); }
-      to   { transform: translateX(140vw); }
-    }
+    .life svg { width: 100%; height: 100%; display: block; }
 
-    /* Accessibility: if the viewer prefers no motion, hold still. */
+    /* Accessibility: hold still for viewers who prefer no motion. */
     @media (prefers-reduced-motion: reduce) {
       .frame { transition: none; }
       .frame.is-visible img { animation: none; }
-      .cloud { animation: none; opacity: 0; }
+      .life { display: none; }
     }
   </style>
 </head>
 
 <body>
-  <!-- The script builds the scenes + clouds into this stage. -->
-  <div class="stage" id="stage"></div>
+  <div class="stage" id="stage">
+    <!-- Scenes get built here by the script -->
+
+    <!-- The living layer: real shapes that move (birds, clouds, sun).
+         Coordinates match the artwork (viewBox 1018 x 1364). -->
+    <div class="life" aria-hidden="true">
+      <svg viewBox="0 0 1018 1364" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="11" />
+          </filter>
+          <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"  stop-color="#fff7e6" stop-opacity="0.55" />
+            <stop offset="55%" stop-color="#fff7e6" stop-opacity="0.14" />
+            <stop offset="100%" stop-color="#fff7e6" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+
+        <!-- soft sun glow, breathing -->
+        <circle cx="880" cy="150" r="210" fill="url(#sun)">
+          <animate attributeName="opacity" values="0.5;0.85;0.5" dur="9s" repeatCount="indefinite" />
+        </circle>
+
+        <!-- drifting clouds -->
+        <g filter="url(#soft)" fill="#ffffff">
+          <ellipse cx="0" cy="110" rx="150" ry="30" opacity="0.45">
+            <animateTransform attributeName="transform" type="translate"
+              from="-360 0" to="1380 0" dur="74s" begin="0s" repeatCount="indefinite" />
+          </ellipse>
+          <ellipse cx="0" cy="200" rx="205" ry="42" opacity="0.4">
+            <animateTransform attributeName="transform" type="translate"
+              from="-420 0" to="1440 0" dur="96s" begin="-30s" repeatCount="indefinite" />
+          </ellipse>
+          <ellipse cx="0" cy="70" rx="110" ry="24" opacity="0.5">
+            <animateTransform attributeName="transform" type="translate"
+              from="-300 0" to="1320 0" dur="62s" begin="-48s" repeatCount="indefinite" />
+          </ellipse>
+        </g>
+
+        <!-- a small flock of birds, flying + flapping -->
+        <g stroke="#2b2b2b" stroke-width="3.2" stroke-linecap="round" fill="none" opacity="0.8">
+          <g>
+            <animateTransform attributeName="transform" type="translate"
+              values="-120 250; 300 175; 640 225; 1140 150" keyTimes="0;0.34;0.66;1"
+              dur="27s" begin="0s" repeatCount="indefinite" calcMode="spline"
+              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
+            <g>
+              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
+              <animateTransform attributeName="transform" type="scale"
+                values="1 1; 1 0.45; 1 1" dur="0.5s" repeatCount="indefinite" additive="sum" />
+            </g>
+          </g>
+          <g>
+            <animateTransform attributeName="transform" type="translate"
+              values="-200 210; 260 150; 680 200; 1180 130" keyTimes="0;0.34;0.66;1"
+              dur="33s" begin="-11s" repeatCount="indefinite" calcMode="spline"
+              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
+            <g transform="scale(0.82)">
+              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
+              <animateTransform attributeName="transform" type="scale"
+                values="1 1; 1 0.5; 1 1" dur="0.58s" repeatCount="indefinite" additive="sum" />
+            </g>
+          </g>
+          <g>
+            <animateTransform attributeName="transform" type="translate"
+              values="-160 285; 320 205; 700 255; 1150 185" keyTimes="0;0.34;0.66;1"
+              dur="30s" begin="-20s" repeatCount="indefinite" calcMode="spline"
+              keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" />
+            <g transform="scale(0.9)">
+              <path d="M-15 0 Q-7 -10 0 -3 Q7 -10 15 0" />
+              <animateTransform attributeName="transform" type="scale"
+                values="1 1; 1 0.42; 1 1" dur="0.47s" repeatCount="indefinite" additive="sum" />
+            </g>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
 
   <script>
     /* ============================================================
@@ -123,26 +185,19 @@
       'svg/frame-3.svg',
     ];
 
-    /* ============================================================
-       2) PACING — how slow and dreamy it feels.
-          FRAME_DURATION = how long each scene holds (ms).
-          Bigger = slower, calmer, more cinematic.
-       ============================================================ */
+    /* 2) PACING — how long each scene holds (ms). Bigger = calmer. */
     const FRAME_DURATION = 5200;
 
-    /* ------------------------------------------------------------
-       Engine below — you don't need to edit this.
-       ------------------------------------------------------------ */
+    /* ---- Engine (no need to edit) ---- */
     const stage = document.getElementById('stage');
+    const life  = stage.querySelector('.life');   // keep birds on top
 
-    // Different gentle camera drift per scene, for variety.
     const DRIFTS = [
-      ['-2.4%', '-1.4%'],
-      [' 2.0%', '-1.2%'],
-      ['-1.8%', ' 1.6%'],
+      ['-2.2%', '-1.3%'],
+      [' 1.9%', '-1.1%'],
+      ['-1.7%', ' 1.5%'],
     ];
 
-    // Build one scene per SVG.
     const frameEls = FRAMES.map((src, i) => {
       const div = document.createElement('div');
       div.className = 'frame';
@@ -153,38 +208,17 @@
       img.style.setProperty('--kb-x', d[0]);
       img.style.setProperty('--kb-y', d[1]);
       div.appendChild(img);
-      stage.appendChild(div);
+      stage.insertBefore(div, life);   // scenes go under the living layer
       return div;
     });
 
-    // Drifting cloud layer (top / left / size / seconds-per-pass).
-    const sky = document.createElement('div');
-    sky.className = 'sky';
-    [
-      ['10%', '5%',  '42vmin', 62],
-      ['40%', '2%',  '54vmin', 84],
-      ['64%', '20%', '34vmin', 72],
-    ].forEach(([top, left, size, secs], k) => {
-      const c = document.createElement('div');
-      c.className = 'cloud';
-      c.style.top = top;
-      c.style.left = left;
-      c.style.width = size;
-      c.style.height = `calc(${size} * 0.5)`;
-      c.style.animationDuration = secs + 's';
-      c.style.animationDelay = (-k * 20) + 's';   // spread them out
-      sky.appendChild(c);
-    });
-    stage.appendChild(sky);
-
-    // Reveal a scene and (re)start its slow camera drift.
     function show(i) {
       const el = frameEls[i];
       el.classList.add('is-visible');
       const img = el.querySelector('img');
-      img.style.animation = 'none';       // rewind the camera...
-      void img.offsetWidth;               // ...force the browser to notice...
-      img.style.animation = '';           // ...then play it again.
+      img.style.animation = 'none';
+      void img.offsetWidth;
+      img.style.animation = '';
     }
 
     let current = 0;
