@@ -82,9 +82,28 @@
   .close{ display:block; margin:6px auto 0; background:var(--ink); color:#fff; border:none; padding:12px 28px; border-radius:24px; font:inherit; font-weight:800; font-size:13px; cursor:pointer; transition:transform .2s; }
   .close:active{ transform:scale(.95); }
 
+  #intro{ position:fixed; inset:0; z-index:300; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; text-align:center; padding:24px;
+    background:radial-gradient(120% 120% at 50% 42%, rgba(244,239,231,.28), rgba(38,28,14,.62));
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    transition:opacity .95s ease; }
+  #intro.gone{ opacity:0; pointer-events:none; }
+  #intro .tag{ font-size:12px; letter-spacing:.34em; text-transform:uppercase; color:rgba(255,255,255,.82); }
+  #intro .brand{ font-size:clamp(38px,8vw,68px); font-weight:800; letter-spacing:.01em; color:#fff;
+    text-shadow:0 3px 26px rgba(0,0,0,.4); }
+  #intro .enter{ margin-top:10px; pointer-events:auto; cursor:pointer; color:#fff; font:inherit;
+    font-weight:800; text-transform:uppercase; letter-spacing:.13em; font-size:13px; padding:14px 32px;
+    border-radius:30px; background:rgba(255,255,255,.16); border:2px solid rgba(255,255,255,.65);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); box-shadow:0 8px 26px rgba(0,0,0,.22);
+    animation:introPulse 2.6s ease-in-out infinite; transition:transform .2s, background .2s; }
+  #intro .enter:hover{ background:rgba(255,255,255,.28); }
+  #intro .enter:active{ transform:scale(.94); }
+  @keyframes introPulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.05);} }
+
   @media (prefers-reduced-motion: reduce){
     .frame{ transition:none; } .frame.is-visible img{ animation:none; }
     .life,.dapple,#grain{ display:none; }
+    #intro .enter{ animation:none; }
   }
 </style>
 </head>
@@ -159,6 +178,12 @@
   </div>
 
   <canvas id="grain"></canvas>
+
+  <div id="intro">
+    <div class="tag">a living illustration</div>
+    <div class="brand">En la lucha</div>
+    <button class="enter" id="enter">Enter the scene</button>
+  </div>
 
   <script>
   /* Editable knobs: your frames + pacing. The rest is the scene engine. */
@@ -251,6 +276,13 @@
   gs.addEventListener('input',e=>{ grainAmt=e.target.value/100; document.getElementById('gv').textContent=e.target.value+'%'; });
   cs.addEventListener('input',e=>{ dur=e.target.value*100; document.getElementById('cv').textContent=(dur/1000).toFixed(1)+'s'; startTimer(); });
   amb.addEventListener('change',e=>{ e.target.checked?startAmbient():stopAmbient(); });
+
+  // title screen: fade away on "Enter"
+  const intro=document.getElementById('intro');
+  function enterScene(){ if(!intro) return; intro.classList.add('gone'); setTimeout(()=>{ intro.style.display='none'; },1000); }
+  const enterBtn=document.getElementById('enter');
+  if(enterBtn) enterBtn.addEventListener('click',enterScene);
+  if(intro) intro.addEventListener('click',(e)=>{ if(e.target===intro) enterScene(); });
   </script>
 </body>
 </html>
