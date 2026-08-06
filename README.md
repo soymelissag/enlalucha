@@ -9,8 +9,8 @@ No build tools, no npm. The placeholder art is generated as self-contained
 SVGs so the app runs with zero external assets — swap in illustrated PNGs
 whenever the real art is ready (see [Assets](#assets)).
 
-> The previous frame-by-frame SVG flipbook still lives at
-> [`animation.html`](animation.html).
+> The interactive **"painter's studio" diorama** lives at
+> [`diorama.html`](diorama.html).
 
 ## Run it
 
@@ -98,5 +98,5 @@ js/app.js             renderer, drag/transform, undo, export
 assets/manifest.js    single source of truth for all assets
 assets/…              generated backgrounds, props, character layers
 tools/gen_assets.py   placeholder-art generator
-animation.html        the earlier SVG flipbook
+diorama.html          the interactive "painter's studio" diorama
 ```
