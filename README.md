@@ -32,10 +32,13 @@ by simply double-clicking `index.html`.
 - **Props** — a 3×3 tray; drag onto the stage. Once placed, a prop can be moved,
   resized, rotated, sent forward/back, and deleted (drag it off-stage or tap ✕).
   The same prop can be added many times.
-- **Abuela** — drag her from the dock onto the stage (one instance). Her
-  **Pose / Expression / Outfit** (single-select) and **Accessories**
-  (multi-select) live in the right panel. Changing a pose keeps her position
-  and size — only the image layers swap.
+- **Abuela** — drag her from the dock onto the stage (one instance). The
+  **Pose** picker offers two **real painted abuelas** cut out from the
+  illustrations in `public/` (*De pie*, *Con andadera*) plus three
+  **customizable cartoon** poses (*Stand / Yell / Run*). Real poses are one
+  fused image, so the **Expression / Outfit / Accessory** controls dim for
+  them; on a cartoon pose those controls swap layers live. Changing a pose
+  keeps her position and size — only the artwork swaps.
 - **Caption** — types live into a band pinned across the bottom 15% of the
   stage (part of the exported image), capped at 80 chars and auto-shrunk.
 - **Export** — composites the stage to a PNG at 2048×1536 and downloads it.
