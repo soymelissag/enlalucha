@@ -21,6 +21,7 @@
   const uid = (() => { let n = 0; return () => "u" + (++n) + "_" + (Date.now() % 100000); })();
 
   /* ---- Image cache & preloading ---------------------------------------- */
+  const CHAR_PREVIEW = "assets/abuela/grandma/grandma-color.svg"; // dock + drag-ghost thumbnail
   const imgCache = new Map();
   function load(src) {
     if (imgCache.has(src)) return imgCache.get(src);
@@ -34,12 +35,13 @@
     return p;
   }
   const poseById = (id) => M.poses.find(p => p.id === id);
+  const mapVals = (o) => o ? Object.values(o) : [];
   const poseSrcs = (pose) => pose.art ? [pose.src]
-    : [pose.body, ...Object.values(pose.faces), ...Object.values(pose.outfits), ...Object.values(pose.accessories)];
+    : [pose.body, ...mapVals(pose.faces), ...mapVals(pose.outfits), ...mapVals(pose.accessories)];
   function preloadPose(id) { const p = poseById(id); return p ? Promise.all(poseSrcs(p).map(load)) : Promise.resolve(); }
-  // Aspect (w/h) of the character's current pose: real cut-outs carry their own,
-  // the layered cartoon uses the shared registration frame.
-  const charAspect = (c) => { const p = poseById(c.pose); return p && p.art ? p.aspect : (M.character.frameW / M.character.frameH); };
+  // Aspect (w/h) of the character's pose: art cut-outs and the grandma poses
+  // carry their own; the cartoon poses use the shared 800x1200 frame.
+  const charAspect = (c) => { const p = poseById(c.pose); return (p && p.aspect) || (M.character.frameW / M.character.frameH); };
 
   /* ---- Scene state ------------------------------------------------------ */
   // x/y are the item CENTRE as a fraction of stage width/height (0..1).
@@ -110,24 +112,49 @@
       grid.appendChild(el);
     });
   }
-  function buildCharacterPanel() {
-    const mk = (opts, current, isMulti, onPick, getActive) => {
-      const row = document.createElement("div"); row.className = "opt-row";
-      opts.forEach(o => {
-        const b = document.createElement("button");
-        b.className = "opt"; b.type = "button"; b.dataset.id = o.id; b.textContent = o.label;
-        b.setAttribute("aria-pressed", String(getActive(o.id)));
-        b.addEventListener("click", () => onPick(o.id));
-        row.appendChild(b);
-      });
-      return row;
-    };
-    $("#poseRow").replaceWith(wrap("poseRow", mk(M.poses, null, false, setPose, id => scene.character && scene.character.pose === id)));
-    $("#exprRow").replaceWith(wrap("exprRow", mk(M.expressionOptions, null, false, setExpression, id => scene.character && scene.character.expression === id)));
-    $("#outfitRow").replaceWith(wrap("outfitRow", mk(M.outfitOptions, null, false, setOutfit, id => scene.character && scene.character.outfit === id)));
-    $("#accRow").replaceWith(wrap("accRow", mk(M.accessoryOptions, null, true, toggleAccessory, id => scene.character && scene.character.acc.includes(id))));
+  // Pose row is static (all poses); the expression/outfit/accessory rows are
+  // rebuilt from the SELECTED pose's available options (poses differ).
+  function optionRow(id, keys, isMulti, onPick, isActive) {
+    const row = document.createElement("div"); row.className = "opt-row"; row.id = id;
+    keys.forEach(k => {
+      const b = document.createElement("button");
+      b.className = "opt"; b.type = "button"; b.dataset.id = k; b.textContent = M.labels[k] || k;
+      b.setAttribute("aria-pressed", String(isActive(k)));
+      b.addEventListener("click", () => onPick(k));
+      row.appendChild(b);
+    });
+    return row;
   }
-  const wrap = (id, child) => { child.id = id; return child; };
+  const keysOf = (o) => o ? Object.keys(o) : [];
+  function toggleSection(rowSel, show) { const r = $(rowSel); if (r) { const s = r.closest(".section"); if (s) s.style.display = show ? "" : "none"; } }
+  function refreshControls() {
+    const c = scene.character, p = c && poseById(c.pose);
+    const fk = p ? keysOf(p.faces) : [], ok = p ? keysOf(p.outfits) : [], ak = p ? keysOf(p.accessories) : [];
+    $("#exprRow").replaceWith(optionRow("exprRow", fk, false, setExpression, id => c && c.expression === id));
+    $("#outfitRow").replaceWith(optionRow("outfitRow", ok, false, setOutfit, id => c && c.outfit === id));
+    $("#accRow").replaceWith(optionRow("accRow", ak, true, toggleAccessory, id => c && c.acc.includes(id)));
+    toggleSection("#exprRow", fk.length > 0);
+    toggleSection("#outfitRow", ok.length > 0);
+    toggleSection("#accRow", ak.length > 0);
+  }
+  function buildCharacterPanel() {
+    const poseRow = document.createElement("div"); poseRow.className = "opt-row"; poseRow.id = "poseRow";
+    M.poses.forEach(p => {
+      const b = document.createElement("button");
+      b.className = "opt"; b.type = "button"; b.dataset.id = p.id; b.textContent = p.label;
+      b.addEventListener("click", () => setPose(p.id));
+      poseRow.appendChild(b);
+    });
+    $("#poseRow").replaceWith(poseRow);
+    refreshControls();
+  }
+  // Keep the character's expression/outfit/accessory valid for its pose.
+  function reconcilePose(c) {
+    const p = poseById(c.pose);
+    const fk = keysOf(p && p.faces); if (fk.length && !fk.includes(c.expression)) c.expression = fk[0];
+    const ok = keysOf(p && p.outfits); if (ok.length && !ok.includes(c.outfit)) c.outfit = ok[0];
+    const ak = keysOf(p && p.accessories); c.acc = (c.acc || []).filter(a => ak.includes(a));
+  }
 
   /* ---- Mutations (each pushes undo, then re-syncs) ---------------------- */
   function setBackground(id) {
@@ -144,7 +171,8 @@
     if (scene.character) return;
     pushUndo();
     scene.character = { x, y, scale: 0.82, z: ++scene.zTop,
-      pose: M.poses[0].id, outfit: M.outfitOptions[0].id, expression: M.expressionOptions[0].id, acc: [] };
+      pose: M.poses[0].id, outfit: null, expression: null, acc: [] };
+    reconcilePose(scene.character);
     selected = "char"; syncAll();
     preloadPose(M.poses[1].id).then(() => preloadPose(M.poses[2].id)); // background preload
   }
@@ -156,7 +184,7 @@
     syncAll();
   }
   const charEdit = (fn) => { if (!scene.character) return; pushUndo(); fn(scene.character); syncCharacter(); syncPickers(); };
-  const setPose       = (id) => charEdit(c => { c.pose = id; });
+  const setPose       = (id) => charEdit(c => { c.pose = id; reconcilePose(c); });
   const setOutfit     = (id) => charEdit(c => { c.outfit = id; });
   const setExpression = (id) => charEdit(c => { c.expression = id; });
   const toggleAccessory = (id) => charEdit(c => {
@@ -215,12 +243,25 @@
     const c = scene.character;
     const pose = poseById(c.pose);
     const layers = el.querySelector(".char-layers");
-    // Real-art pose = one fused image; cartoon pose = stacked registration layers.
-    const srcs = pose.art ? [pose.src]
-      : [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
-         ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
     layers.innerHTML = "";
-    srcs.forEach(s => { const im = document.createElement("img"); im.src = s; im.alt = ""; layers.appendChild(im); });
+    const full = (src) => { const im = document.createElement("img"); im.src = src; im.alt = ""; im.className = "layer-full"; layers.appendChild(im); };
+    if (pose.art) {
+      full(pose.src);
+    } else {
+      full(pose.body);                                            // headless/base body
+      if (pose.outfits && pose.outfits[c.outfit]) full(pose.outfits[c.outfit]);
+      if (pose.faces && pose.faces[c.expression]) {
+        if (pose.head) {                                          // head anchored over the collar
+          const im = document.createElement("img"); im.src = pose.faces[c.expression]; im.alt = ""; im.className = "layer-head";
+          const h = pose.head;
+          im.style.height = (h.h * 100) + "%";
+          im.style.left = (h.cx * 100) + "%";
+          im.style.top = ((h.by - h.h) * 100) + "%";
+          layers.appendChild(im);
+        } else full(pose.faces[c.expression]);                   // full-frame registration
+      }
+      if (pose.accessories) c.acc.forEach(a => { if (pose.accessories[a]) full(pose.accessories[a]); });
+    }
     positionEl(el, c, "char");
     el.classList.toggle("selected", selected === "char");
   }
@@ -242,12 +283,10 @@
     $$("#bgTiles .tile").forEach(t => t.setAttribute("aria-pressed", String(t.dataset.id === scene.background)));
     const c = scene.character;
     setPressed("#poseRow", c && c.pose);
-    setPressed("#exprRow", c && c.expression);
-    setPressed("#outfitRow", c && c.outfit);
-    $$("#accRow .opt").forEach(b => b.setAttribute("aria-pressed", String(!!c && c.acc.includes(b.dataset.id))));
+    refreshControls();                       // rebuild expr/outfit/acc rows for the current pose
     // empty-state dimming
     $(".character").classList.toggle("disabled", !scene.character);
-    // real-art pose: expression/outfit/accessory don't apply, so dim them
+    // fixed-art pose (single fused image): show the explanatory note
     const artPose = !!c && !!poseById(c.pose).art;
     $(".character").classList.toggle("art-pose", artPose);
     $("#abuelaCard").classList.toggle("placed", !!scene.character);
@@ -368,8 +407,7 @@
     e.preventDefault();
     const ghost = document.createElement("div");
     ghost.className = "drag-ghost";
-    const p0 = M.poses[0];
-    const src = payload.kind === "prop" ? M.props.find(p => p.id === payload.id).src : (p0.art ? p0.src : p0.body);
+    const src = payload.kind === "prop" ? M.props.find(p => p.id === payload.id).src : CHAR_PREVIEW;
     const w = payload.kind === "prop" ? 90 : 90;
     ghost.innerHTML = `<img src="${src}" style="width:${w}px">`;
     document.body.appendChild(ghost);
@@ -473,14 +511,26 @@
   }
   async function drawCharacter(ctx, c, W, H) {
     const pose = poseById(c.pose);
-    const srcs = pose.art ? [pose.src]
-      : [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
-         ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
     const h = c.scale * H, w = h * charAspect(c);
+    const drawFull = async (src) => { const im = await load(src); ctx.drawImage(im, -w / 2, -h / 2, w, h); };
     ctx.save();
     ctx.translate(c.x * W, c.y * H);
     ctx.rotate((c.rot || 0) * Math.PI / 180);
-    for (const s of srcs) { const im = await load(s); ctx.drawImage(im, -w / 2, -h / 2, w, h); }
+    if (pose.art) {
+      await drawFull(pose.src);
+    } else {
+      await drawFull(pose.body);
+      if (pose.outfits && pose.outfits[c.outfit]) await drawFull(pose.outfits[c.outfit]);
+      if (pose.faces && pose.faces[c.expression]) {
+        if (pose.head) {                                       // head anchored over the collar
+          const im = await load(pose.faces[c.expression]);
+          const fh = pose.head.h * h, fw = fh * (im.naturalWidth / im.naturalHeight || 1);
+          const fcx = -w / 2 + pose.head.cx * w, chin = -h / 2 + pose.head.by * h;
+          ctx.drawImage(im, fcx - fw / 2, chin - fh, fw, fh);
+        } else await drawFull(pose.faces[c.expression]);
+      }
+      if (pose.accessories) for (const a of c.acc) { if (pose.accessories[a]) await drawFull(pose.accessories[a]); }
+    }
     ctx.restore();
   }
   function drawCaption(ctx, W, H) {
