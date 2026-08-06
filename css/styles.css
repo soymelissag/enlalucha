@@ -87,7 +87,10 @@ button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: n
 .item.selected { outline: 2px dashed var(--accent); outline-offset: 2px; }
 
 .char-layers { position: absolute; inset: 0; }
-.char-layers img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* full-frame registration layers (body, outfit, full-frame faces, accessories) */
+.char-layers img.layer-full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* head layer anchored over a headless body — height/left/top set inline per pose */
+.char-layers img.layer-head { position: absolute; width: auto; transform: translateX(-50%); }
 
 /* Selection handles (children of the item so they rotate with it). */
 .handle {

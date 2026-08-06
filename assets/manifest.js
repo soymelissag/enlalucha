@@ -39,31 +39,46 @@ window.SCENE_MANIFEST = {
     { id: "bandera", label: "Bandera", src: "assets/props/bandera.svg", defaultScale: 0.18 },
   ],
 
-  // Shared vocab so the pickers render from one source of truth even though
-  // each pose stores its own per-pose file for every variant.
-  outfitOptions:     [
-    { id: "vestido", label: "Vestido" },
-    { id: "delantal", label: "Delantal" },
-    { id: "bata", label: "Bata" },
-  ],
-  expressionOptions: [
-    { id: "feliz", label: "Feliz" },
-    { id: "seria", label: "Seria" },
-    { id: "sorprendida", label: "Sorprendida" },
-  ],
-  accessoryOptions:  [
-    { id: "lentes", label: "Lentes" },
-    { id: "aretes", label: "Aretes" },
-    { id: "rosario", label: "Rosario" },
-    { id: "tubos", label: "Tubos" },
-    { id: "panuelo", label: "Pañuelo" },
-  ],
+  // Human labels for every expression / outfit / accessory id used by any pose.
+  // The expression/outfit/accessory pickers are rebuilt per selected pose from
+  // that pose's available keys, so different poses can offer different options.
+  labels: {
+    // expressions
+    feliz: "Feliz", triste: "Triste", enojada: "Enojada", sorprendida: "Sorprendida", seria: "Seria",
+    // outfits
+    vestido: "Vestido", delantal: "Delantal", bata: "Bata",
+    // accessories
+    lentes: "Lentes", aretes: "Aretes", rosario: "Rosario", tubos: "Tubos", panuelo: "Pañuelo",
+  },
 
-  // Real-art poses: cut-outs traced from the painted illustrations in public/
-  // (Artboard 3 & 4). Each is ONE fused image — expression/outfit/accessory
-  // swapping does not apply, so those controls dim when a real pose is active.
-  // `aspect` = width / height of the cut-out, used to size it on the stage.
+  /* Poses come in three flavours the renderer understands:
+   *  - LAYERED + head anchor (the grandma line-art kit): a headless `body` plus
+   *    a `faces` map; `head` places the chosen face over the collar. Cropped
+   *    from grandma-different-poses.svg + grandma-facialexpresssions.svg.
+   *      head = { cx, by, h } as fractions of the body frame:
+   *        cx = face centre x, by = chin/neck y, h = face height.
+   *  - ART (`art:true`, single `src`): one fused image, no sub-controls.
+   *  - LAYERED full-frame (the cartoon placeholder): body/outfit/face/accessory
+   *    all share one 800x1200 registration frame.
+   * `aspect` = width / height of the pose's frame, for sizing on the stage.
+   */
   poses: [
+    // ---- The grandma line-art kit: 4 poses x 4 expressions -----------------
+    { id: "parada", label: "Parada", body: "assets/abuela/grandma/body-parada.svg", aspect: 0.4436,
+      head: { cx: 0.5000, by: 0.4172, h: 0.3999 },
+      faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
+    { id: "senala", label: "Señala", body: "assets/abuela/grandma/body-senala.svg", aspect: 0.5242,
+      head: { cx: 0.5938, by: 0.3942, h: 0.3778 },
+      faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
+    { id: "grita", label: "Grita", body: "assets/abuela/grandma/body-grita.svg", aspect: 0.4858,
+      head: { cx: 0.5000, by: 0.3681, h: 0.3529 },
+      faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
+    { id: "corre", label: "Corre", body: "assets/abuela/grandma/body-corre.svg", aspect: 0.5728,
+      head: { cx: 0.5376, by: 0.4132, h: 0.3961 },
+      faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
+
+    // ---- Fixed full illustrations (single fused image) ---------------------
+    { id: "color",    label: "A color",      art: true, src: "assets/abuela/grandma/grandma-color.svg", aspect: 0.589 },
     { id: "depie",    label: "De pie",       art: true, src: "assets/abuela/real/depie.svg",    aspect: 0.294 },
     { id: "andadera", label: "Con andadera", art: true, src: "assets/abuela/real/andadera.svg", aspect: 0.564 },
     {
