@@ -1,52 +1,102 @@
-# En la lucha — SVG frame animation
+# En la lucha — Scene Builder
 
-A calm, elegant **frame-by-frame** animation (a flipbook) built from SVG
-illustrations. Each SVG is one frame; they play in order and loop.
-No build tools, no npm, no server needed.
+A single-screen **scene builder**. Pick a background, drag props onto the
+stage, drop **Abuela** in, then customize her pose, expression, outfit, and
+accessories. Add a caption and export the result as a PNG.
 
-## How to run it
+Everything visual is a flat, transparent image composited on one 4:3 stage.
+No build tools, no npm. The placeholder art is generated as self-contained
+SVGs so the app runs with zero external assets — swap in illustrated PNGs
+whenever the real art is ready (see [Assets](#assets)).
 
-**Just double-click `index.html`** — it opens in your web browser and plays.
+> The previous frame-by-frame SVG flipbook still lives at
+> [`animation.html`](animation.html).
 
-## Use your own illustrations
+## Run it
 
-1. Put your `.svg` files into the **`svg/`** folder, named in play order,
-   e.g. `frame-1.svg`, `frame-2.svg`, `frame-3.svg` …
-2. Open **`index.html`** in a text editor and find the **`FRAMES`** list
-   near the bottom. List your files in the order they should play:
+Export writes to a `<canvas>`, and browsers block reading a canvas that was
+painted with images loaded over `file://`. So for a **reliable Export**, serve
+the folder over a tiny local server:
 
-   ```js
-   const FRAMES = [
-     'svg/frame-1.svg',
-     'svg/frame-2.svg',
-     'svg/frame-3.svg',
-   ];
-   ```
-
-   Add or remove lines to match how many frames you have.
-
-## Adjust the timing and feel
-
-Two settings, both near the bottom of `index.html`:
-
-```js
-const FRAME_DURATION = 1400;   // how long each frame shows, in ms (1000 = 1s)
+```bash
+python3 -m http.server
+# then open http://localhost:8000/
 ```
 
-And in the `<style>` block:
+Everything except Export (backgrounds, props, character, caption) also works
+by simply double-clicking `index.html`.
 
-```css
-transition: opacity 1.2s ease-in-out;   /* the crossfade between frames */
+## What it does
+
+- **Background** — three tiles under "Select a Background"; click to swap instantly.
+- **Props** — a 3×3 tray; drag onto the stage. Once placed, a prop can be moved,
+  resized, rotated, sent forward/back, and deleted (drag it off-stage or tap ✕).
+  The same prop can be added many times.
+- **Abuela** — drag her from the dock onto the stage (one instance). Her
+  **Pose / Expression / Outfit** (single-select) and **Accessories**
+  (multi-select) live in the right panel. Changing a pose keeps her position
+  and size — only the image layers swap.
+- **Caption** — types live into a band pinned across the bottom 15% of the
+  stage (part of the exported image), capped at 80 chars and auto-shrunk.
+- **Export** — composites the stage to a PNG at 2048×1536 and downloads it.
+- **Undo** — ↶ button or `Ctrl/Cmd+Z` (25 levels).
+
+Interactions use the **Pointer Events API**, so drag works on touch and mouse
+through one code path. Scene content is stored in **percentages** of the stage,
+never pixels, so it survives resizing and exports at any resolution.
+
+## How the layers stack
+
+The stack, bottom to top:
+
+```
+1. background        (fills the stage)
+2. props             (z-ordered by drop sequence, adjustable)
+3. character body/outfit
+4. character face
+5. character accessories
+6. caption band
 ```
 
-- Bigger crossfade = softer, dreamier. Set it to `0s` for a hard
-  "flipbook" cut instead.
-- Change the background gradient at the top of `<style>`:
+### Registration frame (the important bit)
 
-  ```css
-  --sky-top:    #2a3550;
-  --sky-bottom: #6d7f9e;
-  ```
+Every character layer — body, outfit, face, each accessory — is drawn on the
+**same 800×1200 artboard with the figure in the same place** and transparency
+everywhere else. Compositing is then trivial: stack all layers at the same
+x/y/size and they line up *by construction*. No per-combination pixel nudging.
 
-The placeholder frames (`svg/frame-1.svg` … `svg/frame-6.svg`) are just a
-starting point — replace them with your own art whenever you're ready.
+This is why 3 poses × 3 outfits × 3 expressions × 5 accessories is **36 layer
+assets**, not 135 flat combinations.
+
+## Assets
+
+Everything is driven by one manifest — [`assets/manifest.js`](assets/manifest.js).
+Adding a background, prop, pose, outfit, expression, or accessory means editing
+that file and dropping in the image. **No code changes.**
+
+The placeholder art is produced by [`tools/gen_assets.py`](tools/gen_assets.py):
+
+```bash
+python3 tools/gen_assets.py     # regenerates everything under assets/
+```
+
+To use real illustrations, export each character layer from one master
+artboard at identical dimensions with a transparent background, drop the files
+into `assets/`, and point the manifest at them.
+
+> **Labels marked as assumptions** (the sketch was ambiguous): the third
+> background is **Fiesta**; outfits are **Vestido / Delantal / Bata**;
+> accessories are **Lentes / Aretes / Rosario / Tubos / Pañuelo**. Change the
+> `label` strings in the manifest freely.
+
+## Files
+
+```
+index.html            the scene builder
+css/styles.css        layout & chrome
+js/app.js             renderer, drag/transform, undo, export
+assets/manifest.js    single source of truth for all assets
+assets/…              generated backgrounds, props, character layers
+tools/gen_assets.py   placeholder-art generator
+animation.html        the earlier SVG flipbook
+```
