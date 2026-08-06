@@ -59,7 +59,13 @@ window.SCENE_MANIFEST = {
     { id: "panuelo", label: "Pañuelo" },
   ],
 
+  // Real-art poses: cut-outs traced from the painted illustrations in public/
+  // (Artboard 3 & 4). Each is ONE fused image — expression/outfit/accessory
+  // swapping does not apply, so those controls dim when a real pose is active.
+  // `aspect` = width / height of the cut-out, used to size it on the stage.
   poses: [
+    { id: "depie",    label: "De pie",       art: true, src: "assets/abuela/real/depie.svg",    aspect: 0.294 },
+    { id: "andadera", label: "Con andadera", art: true, src: "assets/abuela/real/andadera.svg", aspect: 0.564 },
     {
       id: "stand", label: "Stand", body: "assets/abuela/stand/body.svg",
       faces:       { feliz: "assets/abuela/stand/face-feliz.svg", seria: "assets/abuela/stand/face-seria.svg", sorprendida: "assets/abuela/stand/face-sorprendida.svg" },

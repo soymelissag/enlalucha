@@ -33,9 +33,13 @@
     imgCache.set(src, p);
     return p;
   }
-  const poseSrcs = (pose) => [pose.body,
-    ...Object.values(pose.faces), ...Object.values(pose.outfits), ...Object.values(pose.accessories)];
-  function preloadPose(id) { const p = M.poses.find(p => p.id === id); return p ? Promise.all(poseSrcs(p).map(load)) : Promise.resolve(); }
+  const poseById = (id) => M.poses.find(p => p.id === id);
+  const poseSrcs = (pose) => pose.art ? [pose.src]
+    : [pose.body, ...Object.values(pose.faces), ...Object.values(pose.outfits), ...Object.values(pose.accessories)];
+  function preloadPose(id) { const p = poseById(id); return p ? Promise.all(poseSrcs(p).map(load)) : Promise.resolve(); }
+  // Aspect (w/h) of the character's current pose: real cut-outs carry their own,
+  // the layered cartoon uses the shared registration frame.
+  const charAspect = (c) => { const p = poseById(c.pose); return p && p.art ? p.aspect : (M.character.frameW / M.character.frameH); };
 
   /* ---- Scene state ------------------------------------------------------ */
   // x/y are the item CENTRE as a fraction of stage width/height (0..1).
@@ -174,7 +178,7 @@
   function positionEl(el, it, sel) {
     const w = stage.clientWidth, h = stage.clientHeight;
     let pxW, pxH;
-    if (sel === "char") { pxH = it.scale * h; pxW = pxH * (M.character.frameW / M.character.frameH); }
+    if (sel === "char") { pxH = it.scale * h; pxW = pxH * charAspect(it); }
     else { pxW = it.scale * w; pxH = pxW; }
     el.style.width = pxW + "px";
     el.style.height = pxH + "px";
@@ -209,10 +213,12 @@
     let el = itemEls.get("char");
     if (!el) { el = buildCharEl(scene.character); itemEls.set("char", el); }
     const c = scene.character;
-    const pose = M.poses.find(p => p.id === c.pose);
+    const pose = poseById(c.pose);
     const layers = el.querySelector(".char-layers");
-    const srcs = [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
-      ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
+    // Real-art pose = one fused image; cartoon pose = stacked registration layers.
+    const srcs = pose.art ? [pose.src]
+      : [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
+         ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
     layers.innerHTML = "";
     srcs.forEach(s => { const im = document.createElement("img"); im.src = s; im.alt = ""; layers.appendChild(im); });
     positionEl(el, c, "char");
@@ -241,6 +247,9 @@
     $$("#accRow .opt").forEach(b => b.setAttribute("aria-pressed", String(!!c && c.acc.includes(b.dataset.id))));
     // empty-state dimming
     $(".character").classList.toggle("disabled", !scene.character);
+    // real-art pose: expression/outfit/accessory don't apply, so dim them
+    const artPose = !!c && !!poseById(c.pose).art;
+    $(".character").classList.toggle("art-pose", artPose);
     $("#abuelaCard").classList.toggle("placed", !!scene.character);
     stageHint.style.display = scene.character ? "none" : "block";
   }
@@ -359,7 +368,8 @@
     e.preventDefault();
     const ghost = document.createElement("div");
     ghost.className = "drag-ghost";
-    const src = payload.kind === "prop" ? M.props.find(p => p.id === payload.id).src : M.poses[0].body;
+    const p0 = M.poses[0];
+    const src = payload.kind === "prop" ? M.props.find(p => p.id === payload.id).src : (p0.art ? p0.src : p0.body);
     const w = payload.kind === "prop" ? 90 : 90;
     ghost.innerHTML = `<img src="${src}" style="width:${w}px">`;
     document.body.appendChild(ghost);
@@ -462,10 +472,11 @@
     ctx.restore();
   }
   async function drawCharacter(ctx, c, W, H) {
-    const pose = M.poses.find(p => p.id === c.pose);
-    const srcs = [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
-      ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
-    const h = c.scale * H, w = h * (M.character.frameW / M.character.frameH);
+    const pose = poseById(c.pose);
+    const srcs = pose.art ? [pose.src]
+      : [pose.body, pose.outfits[c.outfit], pose.faces[c.expression],
+         ...c.acc.map(a => pose.accessories[a]).filter(Boolean)];
+    const h = c.scale * H, w = h * charAspect(c);
     ctx.save();
     ctx.translate(c.x * W, c.y * H);
     ctx.rotate((c.rot || 0) * Math.PI / 180);

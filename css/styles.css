@@ -153,6 +153,10 @@ button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: n
 /* ---- Character panel ---------------------------------------------------- */
 .character { grid-area: character; display: flex; flex-direction: column; gap: 12px; }
 .character.disabled .controls { opacity: .4; pointer-events: none; }
+/* Real-art pose selected: expression/outfit/accessory don't apply. */
+.character.art-pose .custom-section { opacity: .4; pointer-events: none; }
+.art-note { display: none; padding: 2px 14px 12px; margin: 0; font-size: 12px; color: var(--muted); }
+.character.art-pose .art-note { display: block; }
 .section + .section { border-top: 1px solid var(--line); }
 .opt-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
 .opt {
