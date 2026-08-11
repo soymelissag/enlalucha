@@ -3,80 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
-  <title>Scene Builder — En la lucha</title>
+  <title>La Escena — Creative Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@100;300;400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="app">
-    <h1 class="title">Scene Builder <small>— drag Abuela in, dress her up, caption it, export.</small></h1>
+  <div class="app-mesh">
 
-    <!-- ===== Stage column ===== -->
-    <div class="stagecol">
-      <div class="toolbar">
-        <input id="captionInput" class="caption-input" type="text" maxlength="80"
-               placeholder="Add a caption…" aria-label="Caption text" />
-        <button id="undoBtn" type="button" title="Undo (Ctrl+Z)">↶ Undo</button>
-        <button id="resetBtn" type="button" title="Clear the scene">Reset</button>
-        <button id="exportBtn" class="primary" type="button">Export PNG</button>
+    <!-- ===== Top bar: brand · caption · actions ===== -->
+    <header class="topbar border-b">
+      <div class="brand border-r">
+        <h1 class="serif text-xl">La Escena</h1>
       </div>
-
-      <div class="stage-wrap">
-        <div class="stage" id="stage">
-          <img id="stageBg" class="stage__bg" src="" alt="Background" />
-          <div class="stage-hint" id="stageHint">Drag <b>Abuela</b> onto the stage to begin →</div>
-          <div class="caption-band empty" id="captionBand"><span id="captionText"></span></div>
-        </div>
+      <div class="caption-area">
+        <input id="captionInput" type="text" class="caption-input" maxlength="80"
+               placeholder="Escribe tu historia aquí…" aria-label="Caption" />
       </div>
+      <div class="actions">
+        <button id="undoBtn" class="btn text-sm" type="button" title="Undo (Ctrl+Z)">Undo</button>
+        <button id="resetBtn" class="btn text-sm" type="button">Reset</button>
+        <button id="exportBtn" class="btn export-btn serif" type="button">Export PNG</button>
+      </div>
+    </header>
 
-      <!-- Background picker -->
-      <section class="panel bg-picker">
-        <h2>Select a Background</h2>
-        <div class="tiles" id="bgTiles"></div>
-      </section>
-    </div>
+    <!-- ===== Stage ===== -->
+    <main class="stage-container">
+      <div class="canvas" id="stage">
+        <img id="stageBg" class="stage__bg" src="" alt="Background" />
+        <div class="coord-marker coord-tl">X:00 Y:00</div>
+        <div class="coord-marker coord-br">W:1920 H:1080</div>
+        <div class="stage-hint" id="stageHint">Drag <b>Abuela</b> onto the scene&nbsp;→</div>
+        <div class="caption-band empty" id="captionBand"><span id="captionText"></span></div>
+      </div>
+    </main>
 
-    <!-- ===== Middle column: props tray + abuela dock ===== -->
-    <div class="props">
-      <section class="panel">
-        <h2>Props — drag onto stage</h2>
-        <div class="prop-grid" id="propGrid"></div>
-      </section>
+    <!-- ===== Bottom bar: context / background selector ===== -->
+    <footer class="bottombar border-t">
+      <div class="bg-selector" id="bgTiles">
+        <span class="text-xs">Contexto:</span>
+      </div>
+      <div class="tagline text-xs">EN LA LUCHA — STUDIO EDITION</div>
+    </footer>
 
-      <section class="panel">
-        <h2>Drag Abuela to Scene</h2>
-        <div class="abuela-dock">
-          <div class="card" id="abuelaCard" role="button" tabindex="0" aria-label="Drag Abuela onto the stage">
-            <img src="assets/abuela/grandma/grandma-color.svg" alt="Abuela" />
-            <b>Abuela</b>
-            <small>Drag me onto the stage</small>
+    <!-- ===== Sidebar: subject + inventory ===== -->
+    <aside class="sidebar border-l">
+
+      <div class="character">
+        <section class="panel-section border-b">
+          <div class="section-header">
+            <span class="text-xs">Sujeto</span>
+            <span class="text-sm serif">Abuela</span>
           </div>
-        </div>
-      </section>
-    </div>
 
-    <!-- ===== Right column: character controls ===== -->
-    <div class="character">
-      <div class="controls">
-        <section class="panel section">
-          <h2>Abuela's Pose</h2>
-          <div class="opt-row" id="poseRow"></div>
-          <p class="art-note" id="artNote">This pose is a single fixed illustration — expression and outfit controls apply to the layered poses (Parada, Señala, Grita, Corre, and the cartoon poses).</p>
-        </section>
-        <section class="panel section custom-section">
-          <h2>Expressions</h2>
-          <div class="opt-row" id="exprRow"></div>
-        </section>
-        <section class="panel section custom-section">
-          <h2>Outfits</h2>
-          <div class="opt-row" id="outfitRow"></div>
-        </section>
-        <section class="panel section custom-section">
-          <h2>Accessories <span style="text-transform:none;font-weight:400">(multi-select)</span></h2>
-          <div class="opt-row" id="accRow"></div>
+          <div class="character-preview" id="abuelaCard" role="button" tabindex="0"
+               aria-label="Drag Abuela onto the scene" title="Drag me onto the scene">
+            <img src="assets/abuela/grandma/grandma-color.svg" alt="Abuela" />
+            <div class="coord-marker coord-tl">FIG. 01</div>
+          </div>
+
+          <div class="controls">
+            <div class="section pose-section">
+              <div class="section-header"><span class="text-xs">Pose</span></div>
+              <div id="poseRow" class="opt-row"></div>
+            </div>
+            <div class="section">
+              <div class="section-header"><span class="text-xs">Expresión</span></div>
+              <div id="exprRow" class="opt-row"></div>
+            </div>
+            <div class="section">
+              <div class="section-header"><span class="text-xs">Atuendo</span></div>
+              <div id="outfitRow" class="opt-row"></div>
+            </div>
+            <div class="section">
+              <div class="section-header"><span class="text-xs">Accesorios</span></div>
+              <div id="accRow" class="opt-row"></div>
+            </div>
+            <p class="art-note" id="artNote">Fixed illustration — expression &amp; outfit apply to the layered poses.</p>
+            <p class="dim-note" id="dimNote">Drag Abuela onto the scene to enable these controls.</p>
+          </div>
         </section>
       </div>
-      <p class="dim-note" id="dimNote">Drop Abuela on the stage to enable these controls.</p>
-    </div>
+
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="text-xs">Inventario</span>
+          <span class="text-xs" id="propCount">&nbsp;</span>
+        </div>
+        <div id="propGrid" class="props-grid"></div>
+      </section>
+
+    </aside>
+
   </div>
 
   <script src="assets/manifest.js"></script>

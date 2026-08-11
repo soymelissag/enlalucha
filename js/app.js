@@ -92,15 +92,16 @@
     const tiles = $("#bgTiles");
     M.backgrounds.forEach(bg => {
       const b = document.createElement("button");
-      b.className = "tile"; b.type = "button"; b.dataset.id = bg.id;
+      b.className = "bg-btn"; b.type = "button"; b.dataset.id = bg.id;
       b.setAttribute("aria-pressed", String(bg.id === scene.background));
-      b.innerHTML = `<img src="${bg.thumb}" alt=""><span>${bg.label}</span>`;
+      b.innerHTML = `<img src="${bg.thumb}" alt=""><span class="text-sm">${bg.label}</span>`;
       b.addEventListener("click", () => setBackground(bg.id));
       tiles.appendChild(b);
     });
   }
   function buildPropsTray() {
     const grid = $("#propGrid");
+    const count = $("#propCount"); if (count) count.textContent = M.props.length + " Items";
     M.props.forEach(pr => {
       const el = document.createElement("div");
       el.className = "tray-item"; el.tabIndex = 0; el.dataset.propId = pr.id;
@@ -280,7 +281,7 @@
   }
   function syncZ() { allItems().forEach(it => { const sel = it === scene.character ? "char" : it.uid; const el = itemEls.get(sel); if (el) el.style.zIndex = String(1000 + it.z); }); }
   function syncPickers() {
-    $$("#bgTiles .tile").forEach(t => t.setAttribute("aria-pressed", String(t.dataset.id === scene.background)));
+    $$("#bgTiles .bg-btn").forEach(t => t.setAttribute("aria-pressed", String(t.dataset.id === scene.background)));
     const c = scene.character;
     setPressed("#poseRow", c && c.pose);
     refreshControls();                       // rebuild expr/outfit/acc rows for the current pose
@@ -457,7 +458,7 @@
   async function exportPNG() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
     const bgImgEl = await load(bg.src);
-    const OUT_W = 2048, OUT_H = Math.round(OUT_W * 3 / 4);   // 4:3 @ 2x-ish
+    const OUT_W = 1920, OUT_H = Math.round(OUT_W * 9 / 16);  // 16:9 @ 1080p
     const canvas = document.createElement("canvas");
     canvas.width = OUT_W; canvas.height = OUT_H;
     const ctx = canvas.getContext("2d");
