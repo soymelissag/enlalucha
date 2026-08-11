@@ -19,7 +19,7 @@
       </div>
       <div class="caption-area">
         <input id="captionInput" type="text" class="caption-input" maxlength="80"
-               placeholder="Escribe tu historia aquí…" aria-label="Caption" />
+               placeholder="Write your story here…" aria-label="Caption" />
       </div>
       <div class="actions">
         <button id="undoBtn" class="btn text-sm" type="button" title="Undo (Ctrl+Z)">Undo</button>
@@ -34,7 +34,7 @@
         <img id="stageBg" class="stage__bg" src="" alt="Background" />
         <div class="coord-marker coord-tl">X:00 Y:00</div>
         <div class="coord-marker coord-br">W:1920 H:1080</div>
-        <div class="stage-hint" id="stageHint">Drag <b>Abuela</b> onto the scene&nbsp;→</div>
+        <div class="stage-hint" id="stageHint">Drag <b>Grandma</b> onto the scene&nbsp;→</div>
         <div class="caption-band empty" id="captionBand"><span id="captionText"></span></div>
       </div>
     </main>
@@ -42,7 +42,7 @@
     <!-- ===== Bottom bar: context / background selector ===== -->
     <footer class="bottombar border-t">
       <div class="bg-selector" id="bgTiles">
-        <span class="text-xs">Contexto:</span>
+        <span class="text-xs">Context:</span>
       </div>
       <div class="tagline text-xs">EN LA LUCHA — STUDIO EDITION</div>
     </footer>
@@ -53,13 +53,13 @@
       <div class="character">
         <section class="panel-section border-b">
           <div class="section-header">
-            <span class="text-xs">Sujeto</span>
-            <span class="text-sm serif">Abuela</span>
+            <span class="text-xs">Subject</span>
+            <span class="text-sm serif">Grandma</span>
           </div>
 
           <div class="character-preview" id="abuelaCard" role="button" tabindex="0"
-               aria-label="Drag Abuela onto the scene" title="Drag me onto the scene">
-            <img src="assets/abuela/grandma/grandma-color.svg" alt="Abuela" />
+               aria-label="Drag Grandma onto the scene" title="Drag me onto the scene">
+            <img src="assets/abuela/grandma/grandma-color.svg" alt="Grandma" />
             <div class="coord-marker coord-tl">FIG. 01</div>
           </div>
 
@@ -69,26 +69,26 @@
               <div id="poseRow" class="opt-row"></div>
             </div>
             <div class="section">
-              <div class="section-header"><span class="text-xs">Expresión</span></div>
+              <div class="section-header"><span class="text-xs">Expression</span></div>
               <div id="exprRow" class="opt-row"></div>
             </div>
             <div class="section">
-              <div class="section-header"><span class="text-xs">Atuendo</span></div>
+              <div class="section-header"><span class="text-xs">Outfit</span></div>
               <div id="outfitRow" class="opt-row"></div>
             </div>
             <div class="section">
-              <div class="section-header"><span class="text-xs">Accesorios</span></div>
+              <div class="section-header"><span class="text-xs">Accessories</span></div>
               <div id="accRow" class="opt-row"></div>
             </div>
             <p class="art-note" id="artNote">Fixed illustration — expression &amp; outfit apply to the layered poses.</p>
-            <p class="dim-note" id="dimNote">Drag Abuela onto the scene to enable these controls.</p>
+            <p class="dim-note" id="dimNote">Drag Grandma onto the scene to enable these controls.</p>
           </div>
         </section>
       </div>
 
       <section class="panel-section">
         <div class="section-header">
-          <span class="text-xs">Inventario</span>
+          <span class="text-xs">Inventory</span>
           <span class="text-xs" id="propCount">&nbsp;</span>
         </div>
         <div id="propGrid" class="props-grid"></div>

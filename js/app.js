@@ -484,7 +484,7 @@
     try {
       const url = canvas.toDataURL("image/png");
       const a = document.createElement("a");
-      a.href = url; a.download = "escena-abuela.png"; a.click();
+      a.href = url; a.download = "la-escena-scene.png"; a.click();
     } catch (err) {
       alert("Export was blocked by the browser's canvas security policy.\n" +
             "This happens when opening index.html directly via file://.\n\n" +
