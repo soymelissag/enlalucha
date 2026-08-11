@@ -23,20 +23,20 @@ window.SCENE_MANIFEST = {
   backgrounds: [
     { id: "beach",  label: "Beach",  src: "assets/bg/beach.svg",  thumb: "assets/bg/beach.svg" },
     { id: "home",   label: "Home",   src: "assets/bg/home.svg",   thumb: "assets/bg/home.svg" },
-    { id: "fiesta", label: "Fiesta", src: "assets/bg/fiesta.svg", thumb: "assets/bg/fiesta.svg" },
+    { id: "fiesta", label: "Party", src: "assets/bg/fiesta.svg", thumb: "assets/bg/fiesta.svg" },
   ],
 
   // defaultScale = fraction of stage width the prop spans when first dropped.
   props: [
-    { id: "chancla", label: "Chancla", src: "assets/props/chancla.svg", defaultScale: 0.16 },
+    { id: "chancla", label: "Sandal", src: "assets/props/chancla.svg", defaultScale: 0.16 },
     { id: "cactus",  label: "Cactus",  src: "assets/props/cactus.svg",  defaultScale: 0.18 },
-    { id: "planta",  label: "Planta",  src: "assets/props/planta.svg",  defaultScale: 0.18 },
-    { id: "tele",    label: "Tele",    src: "assets/props/tele.svg",    defaultScale: 0.22 },
+    { id: "planta",  label: "Plant",  src: "assets/props/planta.svg",  defaultScale: 0.18 },
+    { id: "tele",    label: "TV",    src: "assets/props/tele.svg",    defaultScale: 0.22 },
     { id: "radio",   label: "Radio",   src: "assets/props/radio.svg",   defaultScale: 0.20 },
-    { id: "cafe",    label: "Café",    src: "assets/props/cafe.svg",    defaultScale: 0.14 },
-    { id: "perro",   label: "Perro",   src: "assets/props/perro.svg",   defaultScale: 0.22 },
-    { id: "olla",    label: "Olla",    src: "assets/props/olla.svg",    defaultScale: 0.18 },
-    { id: "bandera", label: "Bandera", src: "assets/props/bandera.svg", defaultScale: 0.18 },
+    { id: "cafe",    label: "Coffee",    src: "assets/props/cafe.svg",    defaultScale: 0.14 },
+    { id: "perro",   label: "Dog",   src: "assets/props/perro.svg",   defaultScale: 0.22 },
+    { id: "olla",    label: "Pot",    src: "assets/props/olla.svg",    defaultScale: 0.18 },
+    { id: "bandera", label: "Flag", src: "assets/props/bandera.svg", defaultScale: 0.18 },
   ],
 
   // Human labels for every expression / outfit / accessory id used by any pose.
@@ -44,11 +44,11 @@ window.SCENE_MANIFEST = {
   // that pose's available keys, so different poses can offer different options.
   labels: {
     // expressions
-    feliz: "Feliz", triste: "Triste", enojada: "Enojada", sorprendida: "Sorprendida", seria: "Seria",
+    feliz: "Happy", triste: "Sad", enojada: "Angry", sorprendida: "Surprised", seria: "Serious",
     // outfits
-    vestido: "Vestido", delantal: "Delantal", bata: "Bata",
+    vestido: "Dress", delantal: "Apron", bata: "Robe",
     // accessories
-    lentes: "Lentes", aretes: "Aretes", rosario: "Rosario", tubos: "Tubos", panuelo: "Pañuelo",
+    lentes: "Glasses", aretes: "Earrings", rosario: "Rosary", tubos: "Curlers", panuelo: "Headscarf",
   },
 
   /* Poses come in three flavours the renderer understands:
@@ -64,23 +64,23 @@ window.SCENE_MANIFEST = {
    */
   poses: [
     // ---- The grandma line-art kit: 4 poses x 4 expressions -----------------
-    { id: "parada", label: "Parada", body: "assets/abuela/grandma/body-parada.svg", aspect: 0.4436,
+    { id: "parada", label: "Standing", body: "assets/abuela/grandma/body-parada.svg", aspect: 0.4436,
       head: { cx: 0.5000, by: 0.4172, h: 0.3999 },
       faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
-    { id: "senala", label: "Señala", body: "assets/abuela/grandma/body-senala.svg", aspect: 0.5242,
+    { id: "senala", label: "Pointing", body: "assets/abuela/grandma/body-senala.svg", aspect: 0.5242,
       head: { cx: 0.5938, by: 0.3942, h: 0.3778 },
       faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
-    { id: "grita", label: "Grita", body: "assets/abuela/grandma/body-grita.svg", aspect: 0.4858,
+    { id: "grita", label: "Yelling", body: "assets/abuela/grandma/body-grita.svg", aspect: 0.4858,
       head: { cx: 0.5000, by: 0.3681, h: 0.3529 },
       faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
-    { id: "corre", label: "Corre", body: "assets/abuela/grandma/body-corre.svg", aspect: 0.5728,
+    { id: "corre", label: "Running", body: "assets/abuela/grandma/body-corre.svg", aspect: 0.5728,
       head: { cx: 0.5376, by: 0.4132, h: 0.3961 },
       faces: { feliz: "assets/abuela/grandma/face-feliz.svg", triste: "assets/abuela/grandma/face-triste.svg", enojada: "assets/abuela/grandma/face-enojada.svg", sorprendida: "assets/abuela/grandma/face-sorprendida.svg" } },
 
     // ---- Fixed full illustrations (single fused image) ---------------------
-    { id: "color",    label: "A color",      art: true, src: "assets/abuela/grandma/grandma-color.svg", aspect: 0.589 },
-    { id: "depie",    label: "De pie",       art: true, src: "assets/abuela/real/depie.svg",    aspect: 0.294 },
-    { id: "andadera", label: "Con andadera", art: true, src: "assets/abuela/real/andadera.svg", aspect: 0.564 },
+    { id: "color",    label: "Color",      art: true, src: "assets/abuela/grandma/grandma-color.svg", aspect: 0.589 },
+    { id: "depie",    label: "Painted",       art: true, src: "assets/abuela/real/depie.svg",    aspect: 0.294 },
+    { id: "andadera", label: "Walker", art: true, src: "assets/abuela/real/andadera.svg", aspect: 0.564 },
     {
       id: "stand", label: "Stand", body: "assets/abuela/stand/body.svg",
       faces:       { feliz: "assets/abuela/stand/face-feliz.svg", seria: "assets/abuela/stand/face-seria.svg", sorprendida: "assets/abuela/stand/face-sorprendida.svg" },
