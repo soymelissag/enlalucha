@@ -21,7 +21,7 @@ window.SCENE_MANIFEST = {
   character: { frameW: 800, frameH: 1200 },
 
   backgrounds: [
-    { id: "tower",  label: "Tower",   src: "public/tower.png",  thumb: "public/tower.png" },
+    { id: "tower",  label: "Tower",   src: "public/tower.png",  thumb: "public/tower.png", fit: "contain" },
     { id: "lasala", label: "La Sala", src: "public/lasala.png", thumb: "public/lasala.png" },
     { id: "beach",  label: "Beach",   src: "public/beach.png",  thumb: "public/beach.png" },
   ],

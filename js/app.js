@@ -201,7 +201,11 @@
   /* ---- Rendering / reconcile ------------------------------------------- */
   function syncBackground() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
-    if (bg) bgImg.src = bg.src;
+    if (bg) {
+      bgImg.src = bg.src;
+      // "contain" shows the whole image (letterboxed); default is "cover".
+      bgImg.style.objectFit = bg.fit === "contain" ? "contain" : "cover";
+    }
   }
   function positionEl(el, it, sel) {
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -443,8 +447,15 @@
     canvas.width = OUT_W; canvas.height = OUT_H;
     const ctx = canvas.getContext("2d");
 
-    // 1. background (cover)
-    drawCover(ctx, bgImgEl, OUT_W, OUT_H);
+    // 1. background — "contain" shows the whole image on a sky-coloured
+    //    letterbox; everything else fills the frame ("cover").
+    if (bg.fit === "contain") {
+      ctx.fillStyle = "#F1FAEE";           // matches the stage --color-sky
+      ctx.fillRect(0, 0, OUT_W, OUT_H);
+      drawContain(ctx, bgImgEl, OUT_W, OUT_H);
+    } else {
+      drawCover(ctx, bgImgEl, OUT_W, OUT_H);
+    }
 
     // 2..5 props + character interleaved by z (drop order, adjustable)
     const renderables = [];
@@ -478,6 +489,13 @@
     let dw, dh, dx, dy;
     if (ir > cr) { dh = H; dw = H * ir; } else { dw = W; dh = W / ir; }
     dx = (W - dw) / 2; dy = (H - dh) / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
+  function drawContain(ctx, img, W, H) {
+    const ir = img.width / img.height, cr = W / H;
+    let dw, dh;
+    if (ir > cr) { dw = W; dh = W / ir; } else { dh = H; dw = H * ir; }
+    const dx = (W - dw) / 2, dy = (H - dh) / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
   }
   async function drawProp(ctx, p, W, H) {
