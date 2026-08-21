@@ -50,7 +50,7 @@ window.SCENE_MANIFEST = {
    * image, used to size the figure on the stage. */
   poses: [
     { id: "standing", label: "Standing", body: "public/_empty.png", aspect: 0.451,
-      head: { cx: 0.49, by: 0.12, h: 0.32 },
+      head: { cx: 0.49, by: 0.08, h: 0.32 },
       outfits: { red: "public/Red - Standing.png", yellow: "public/Yellow - Standing.png" },
       faces:   { normal: "public/Face Normal.png", happy: "public/Face Happy.png", sad: "public/Face Sad.png", mad: "public/Face Mad.png" } },
     { id: "pointing", label: "Pointing", body: "public/_empty.png", aspect: 0.727,
@@ -58,7 +58,7 @@ window.SCENE_MANIFEST = {
       outfits: { red: "public/Red - Pointing.png", yellow: "public/Yellow - Pointing.png" },
       faces:   { normal: "public/Face Normal.png", happy: "public/Face Happy.png", sad: "public/Face Sad.png", mad: "public/Face Mad.png" } },
     { id: "running", label: "Running", body: "public/_empty.png", aspect: 0.836,
-      head: { cx: 0.53, by: 0.14, h: 0.32 },
+      head: { cx: 0.53, by: 0.10, h: 0.32 },
       outfits: { red: "public/Red - Running.png", yellow: "public/Yellow - Running.png" },
       faces:   { normal: "public/Face Normal.png", happy: "public/Face Happy.png", sad: "public/Face Sad.png", mad: "public/Face Mad.png" } },
     { id: "armsup", label: "Arms Up", body: "public/_empty.png", aspect: 0.606,
