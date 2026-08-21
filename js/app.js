@@ -201,20 +201,7 @@
   /* ---- Rendering / reconcile ------------------------------------------- */
   function syncBackground() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
-    if (!bg) return;
-    bgImg.style.objectFit = bg.fit === "contain" ? "contain" : "cover";
-    // Reshape the stage to the background's own proportions so the whole
-    // image shows with no cropping and no empty margin.
-    const applyAspect = () => {
-      const w = bgImg.naturalWidth, h = bgImg.naturalHeight;
-      if (!w || !h) return;
-      stage.style.aspectRatio = `${w} / ${h}`;
-      const label = $(".coord-br");
-      if (label) label.textContent = `W:${w} H:${h}`;
-    };
-    bgImg.onload = applyAspect;
-    bgImg.src = bg.src;
-    if (bgImg.complete) applyAspect();
+    if (bg) bgImg.src = bg.src;   // square crop + top anchor handled in CSS
   }
   function positionEl(el, it, sel) {
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -451,22 +438,15 @@
   async function exportPNG() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
     const bgImgEl = await load(bg.src);
-    // Export at the background's own pixel size so it fills the frame exactly.
+    // Export as a square (matches the square stage).
     const OUT_W = bgImgEl.naturalWidth || bgImgEl.width || 1600;
-    const OUT_H = bgImgEl.naturalHeight || bgImgEl.height || 2000;
+    const OUT_H = OUT_W;
     const canvas = document.createElement("canvas");
     canvas.width = OUT_W; canvas.height = OUT_H;
     const ctx = canvas.getContext("2d");
 
-    // 1. background — "contain" shows the whole image on a sky-coloured
-    //    letterbox; everything else fills the frame ("cover").
-    if (bg.fit === "contain") {
-      ctx.fillStyle = "#F1FAEE";           // matches the stage --color-sky
-      ctx.fillRect(0, 0, OUT_W, OUT_H);
-      drawContain(ctx, bgImgEl, OUT_W, OUT_H);
-    } else {
-      drawCover(ctx, bgImgEl, OUT_W, OUT_H);
-    }
+    // 1. background — fill the square, anchored to the top (crop the bottom).
+    drawCoverTop(ctx, bgImgEl, OUT_W, OUT_H);
 
     // 2..5 props + character interleaved by z (drop order, adjustable)
     const renderables = [];
@@ -507,6 +487,15 @@
     let dw, dh;
     if (ir > cr) { dw = W; dh = W / ir; } else { dh = H; dw = H * ir; }
     const dx = (W - dw) / 2, dy = (H - dh) / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
+  // Cover the frame, anchored to the TOP: a too-tall image keeps its top and
+  // loses its bottom; a too-wide image is centred horizontally.
+  function drawCoverTop(ctx, img, W, H) {
+    const ir = img.width / img.height, cr = W / H;
+    let dw, dh, dx, dy;
+    if (ir > cr) { dh = H; dw = H * ir; dx = (W - dw) / 2; dy = 0; }
+    else         { dw = W; dh = W / ir; dx = 0;           dy = 0; }
     ctx.drawImage(img, dx, dy, dw, dh);
   }
   async function drawProp(ctx, p, W, H) {

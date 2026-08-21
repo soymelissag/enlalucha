@@ -99,15 +99,13 @@ body {
   padding: 40px; position: relative; min-height: 0;
 }
 .canvas {
-  /* The stage reshapes per background (set in JS) so the whole image shows
-     with no crop/margin. Height-driven + max-width keeps it inside the row.
-     aspect-ratio here is just the default-background fallback before load. */
-  height: 100%; width: auto; max-width: 100%; aspect-ratio: 2043 / 2079;
+  /* Fixed square stage. Height-driven, capped by width so it always fits. */
+  height: 100%; width: auto; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1;
   background: var(--color-sky); position: relative; overflow: hidden;
   border: 1px solid var(--grid-color); box-shadow: 0 20px 40px rgba(0,0,0,0.05);
   touch-action: none;
 }
-.stage__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.stage__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; pointer-events: none; }
 
 .coord-marker { position: absolute; font-family: var(--font-mono); font-size: 8px; color: var(--text-muted); z-index: 2; pointer-events: none; letter-spacing: 0.08em; }
 .coord-tl { top: 8px; left: 8px; }
