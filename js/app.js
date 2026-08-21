@@ -21,13 +21,14 @@
   const uid = (() => { let n = 0; return () => "u" + (++n) + "_" + (Date.now() % 100000); })();
 
   /* ---- Image cache & preloading ---------------------------------------- */
-  const CHAR_PREVIEW = "assets/abuela/grandma/grandma-color.svg"; // dock + drag-ghost thumbnail
+  const CHAR_PREVIEW = "public/abuela-preview.png"; // dock + drag-ghost thumbnail
   const imgCache = new Map();
+  const natAR = new Map();   // src -> naturalWidth/naturalHeight, for on-stage sizing
   function load(src) {
     if (imgCache.has(src)) return imgCache.get(src);
     const p = new Promise((res, rej) => {
       const im = new Image();
-      im.onload = () => res(im);
+      im.onload = () => { if (im.naturalHeight) natAR.set(src, im.naturalWidth / im.naturalHeight); res(im); };
       im.onerror = () => rej(new Error("failed: " + src));
       im.src = src;
     });
@@ -207,7 +208,11 @@
     const w = stage.clientWidth, h = stage.clientHeight;
     let pxW, pxH;
     if (sel === "char") { pxH = it.scale * h; pxW = pxH * charAspect(it); }
-    else { pxW = it.scale * w; pxH = pxW; }
+    else {
+      const def = M.props.find(d => d.id === it.id);
+      const ar = (def && natAR.get(def.src)) || 1;   // preserve the prop's own shape
+      pxW = it.scale * w; pxH = pxW / ar;
+    }
     el.style.width = pxW + "px";
     el.style.height = pxH + "px";
     el.style.left = (it.x * w) + "px";
