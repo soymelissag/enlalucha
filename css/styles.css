@@ -70,24 +70,14 @@ body {
 .topbar {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 240px 1fr auto;
+  grid-template-columns: 240px 1fr;
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(4px);
   z-index: 10;
 }
 .brand { display: flex; align-items: center; justify-content: center; padding: 0 20px; }
-.caption-area { display: flex; align-items: center; justify-content: center; padding: 0 40px; }
-.caption-input {
-  width: 100%; max-width: 420px;
-  border: none; border-bottom: 1px solid var(--text-main);
-  background: transparent; font-family: var(--font-serif); font-size: 24px;
-  text-align: center; padding: 8px 0; color: var(--text-main); outline: none;
-  -webkit-user-select: text; user-select: text;
-}
-.caption-input::placeholder { color: #cfcfcf; font-style: italic; }
-.caption-input:focus { border-bottom-color: var(--accent); }
 
-.actions { display: flex; }
+.actions { display: flex; justify-content: flex-end; }
 .btn {
   background: transparent; border: none; border-left: 1px solid var(--grid-color);
   padding: 0 26px; cursor: pointer; display: flex; align-items: center; justify-content: center;
