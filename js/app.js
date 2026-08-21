@@ -84,7 +84,6 @@
   const bgImg = $("#stageBg");
   const captionBand = $("#captionBand");
   const captionText = $("#captionText");
-  const stageHint = $("#stageHint");
   const itemEls = new Map();           // uid|"char" -> element
 
   /* ---- Build static UI from the manifest -------------------------------- */
@@ -295,7 +294,6 @@
     const artPose = !!c && !!poseById(c.pose).art;
     $(".character").classList.toggle("art-pose", artPose);
     $("#abuelaCard").classList.toggle("placed", !!scene.character);
-    stageHint.style.display = scene.character ? "none" : "block";
   }
   const setPressed = (rowSel, id) => $$(rowSel + " .opt").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
   function syncCaption() {
@@ -436,7 +434,7 @@
 
   /* ---- Deselect on empty stage tap ------------------------------------- */
   stage.addEventListener("pointerdown", (e) => {
-    if (e.target === stage || e.target === bgImg || e.target === stageHint) { selected = null; syncProps(); syncCharacter(); }
+    if (e.target === stage || e.target === bgImg) { selected = null; syncProps(); syncCharacter(); }
   });
 
   /* ---- Export ----------------------------------------------------------- */
