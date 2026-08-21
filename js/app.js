@@ -401,7 +401,8 @@
       const off = e.clientX < r.left - 20 || e.clientX > r.right + 20 || e.clientY < r.top - 20 || e.clientY > r.bottom + 20;
       if (off) { deleteItem(g.sel); return; }
     }
-    if (!g.moved && g.type === "move") { /* was a plain select/tap */ }
+    if (!g.moved && g.type === "move") { /* was a plain select/tap — keep it selected */ }
+    else if (g.type === "move" && g.moved) { select(null); }   // dragging places it: hide anchors
     updateUndoBtn();
   }
 
@@ -426,6 +427,7 @@
         const y = clamp((ev.clientY - r.top) / r.height, 0, 1);
         if (payload.kind === "prop") addProp(payload.id, x, y);
         else placeCharacter(x, y);
+        select(null);   // hide anchors right after placing
       }
     };
     window.addEventListener("pointermove", move);

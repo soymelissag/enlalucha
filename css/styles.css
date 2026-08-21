@@ -137,8 +137,10 @@ body {
 .handle {
   position: absolute; width: 24px; height: 24px; border-radius: 50%;
   background: #fff; border: 1.5px solid var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.2);
-  display: grid; place-items: center; font-size: 12px; cursor: pointer; touch-action: none; color: var(--accent); z-index: 3;
+  display: none; place-items: center; font-size: 12px; cursor: pointer; touch-action: none; color: var(--accent); z-index: 3;
 }
+/* Anchors show only on the selected item (hidden after placing/dragging). */
+.item.selected .handle { display: grid; }
 .handle.resize { right: -12px; bottom: -12px; cursor: nwse-resize; }
 .handle.rotate { left: 50%; top: -44px; transform: translateX(-50%); cursor: grab; }
 .handle.rotate::after { content: ""; position: absolute; top: 24px; left: 50%; width: 1.5px; height: 20px; background: var(--accent); }
