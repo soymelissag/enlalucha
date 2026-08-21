@@ -73,7 +73,6 @@
     scene = JSON.parse(undoStack.pop());
     if (selected && selected !== "char" && !scene.props.find(p => p.uid === selected)) selected = null;
     if (selected === "char" && !scene.character) selected = null;
-    $("#captionInput").value = scene.caption;
     syncAll();
     updateUndoBtn();
   }
@@ -435,25 +434,6 @@
     if (e.target === stage || e.target === bgImg || e.target === stageHint) { selected = null; syncProps(); syncCharacter(); }
   });
 
-  /* ---- Caption input ---------------------------------------------------- */
-  const capInput = $("#captionInput");
-  let captionBaseline = null;   // whole-scene snapshot taken before an edit session
-  capInput.addEventListener("focus", () => { captionBaseline = snapshot(); });
-  capInput.addEventListener("blur", () => { captionBaseline = null; });
-  capInput.addEventListener("input", () => {
-    // Push the pre-typing snapshot exactly once per editing session so a single
-    // Undo reverts the whole caption edit rather than one keystroke.
-    if (captionBaseline !== null) {
-      undoStack.push(captionBaseline);
-      if (undoStack.length > UNDO_MAX) undoStack.shift();
-      updateUndoBtn();
-      captionBaseline = null;
-    }
-    scene.caption = capInput.value.slice(0, 80);
-    if (capInput.value.length > 80) capInput.value = scene.caption;
-    syncCaption();
-  });
-
   /* ---- Export ----------------------------------------------------------- */
   async function exportPNG() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
@@ -574,7 +554,7 @@
       if (!confirm("Clear the scene and start over?")) return;
       pushUndo(); scene = freshScene(); selected = null;
       itemEls.forEach(el => el.remove()); itemEls.clear();
-      capInput.value = ""; syncAll();
+      syncAll();
     });
     window.addEventListener("keydown", (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
