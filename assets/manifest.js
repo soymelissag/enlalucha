@@ -21,9 +21,9 @@ window.SCENE_MANIFEST = {
   character: { frameW: 800, frameH: 1200 },
 
   backgrounds: [
-    { id: "beach",  label: "Beach",  src: "assets/bg/beach.svg",  thumb: "assets/bg/beach.svg" },
-    { id: "home",   label: "Home",   src: "assets/bg/home.svg",   thumb: "assets/bg/home.svg" },
-    { id: "fiesta", label: "Party", src: "assets/bg/fiesta.svg", thumb: "assets/bg/fiesta.svg" },
+    { id: "tower",  label: "Tower",   src: "public/tower.png",  thumb: "public/tower.png" },
+    { id: "lasala", label: "La Sala", src: "public/lasala.png", thumb: "public/lasala.png" },
+    { id: "beach",  label: "Beach",   src: "public/beach.png",  thumb: "public/beach.png" },
   ],
 
   // defaultScale = fraction of stage width the prop spans when first dropped.
