@@ -201,11 +201,20 @@
   /* ---- Rendering / reconcile ------------------------------------------- */
   function syncBackground() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
-    if (bg) {
-      bgImg.src = bg.src;
-      // "contain" shows the whole image (letterboxed); default is "cover".
-      bgImg.style.objectFit = bg.fit === "contain" ? "contain" : "cover";
-    }
+    if (!bg) return;
+    bgImg.style.objectFit = bg.fit === "contain" ? "contain" : "cover";
+    // Reshape the stage to the background's own proportions so the whole
+    // image shows with no cropping and no empty margin.
+    const applyAspect = () => {
+      const w = bgImg.naturalWidth, h = bgImg.naturalHeight;
+      if (!w || !h) return;
+      stage.style.aspectRatio = `${w} / ${h}`;
+      const label = $(".coord-br");
+      if (label) label.textContent = `W:${w} H:${h}`;
+    };
+    bgImg.onload = applyAspect;
+    bgImg.src = bg.src;
+    if (bgImg.complete) applyAspect();
   }
   function positionEl(el, it, sel) {
     const w = stage.clientWidth, h = stage.clientHeight;
@@ -442,7 +451,9 @@
   async function exportPNG() {
     const bg = M.backgrounds.find(b => b.id === scene.background);
     const bgImgEl = await load(bg.src);
-    const OUT_W = 1920, OUT_H = Math.round(OUT_W * 9 / 16);  // 16:9 @ 1080p
+    // Export at the background's own pixel size so it fills the frame exactly.
+    const OUT_W = bgImgEl.naturalWidth || bgImgEl.width || 1600;
+    const OUT_H = bgImgEl.naturalHeight || bgImgEl.height || 2000;
     const canvas = document.createElement("canvas");
     canvas.width = OUT_W; canvas.height = OUT_H;
     const ctx = canvas.getContext("2d");
